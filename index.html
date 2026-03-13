@@ -82,6 +82,30 @@
   .btn-primary:hover { background:#d4a820; }
   .btn-skip { background:transparent; border-color:var(--dim); color:var(--dim); }
   .btn-skip:hover { border-color:var(--text); color:var(--text); }
+
+  /* ── D-Pad Controls ── */
+  .dpad {
+    display: none;
+    grid-template-columns: repeat(3, 52px);
+    grid-template-rows: repeat(3, 52px);
+    gap: 4px;
+    margin-top: 4px;
+    user-select: none;
+  }
+  @media (pointer: coarse) { .dpad { display: grid; } }
+  .dpad-btn {
+    background: #1a1c2e;
+    border: 2px solid #2a3060;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    cursor: pointer;
+    touch-action: none;
+    transition: background 0.1s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .dpad-btn:active, .dpad-btn.pressed { background: #2a3060; border-color: var(--accent); }
+  .dpad-center { visibility: hidden; }
 </style>
 </head>
 <body>
@@ -111,7 +135,18 @@
       <div class="hud-item"><span class="hud-label">BEST</span><span class="hud-value" id="bestDisplay">—</span></div>
     </div>
     <canvas id="gameCanvas" width="520" height="420"></canvas>
-    <div class="controls-hint">ARROW KEYS TO MOVE &nbsp;|&nbsp; SPACE TO START / RESTART</div>
+    <div class="controls-hint">ARROW KEYS / D-PAD TO MOVE &nbsp;|&nbsp; CLICK TO START</div>
+    <div class="dpad" id="dpad">
+      <div></div>
+      <div class="dpad-btn" id="btn-up">▲</div>
+      <div></div>
+      <div class="dpad-btn" id="btn-left">◀</div>
+      <div class="dpad-center"></div>
+      <div class="dpad-btn" id="btn-right">▶</div>
+      <div></div>
+      <div class="dpad-btn" id="btn-down">▼</div>
+      <div></div>
+    </div>
   </div>
 
   <div class="scoreboard">
@@ -443,7 +478,7 @@ function drawStartScreen(){
   ctx.fillText(`A 2nd cat joins after ${CAT2_TIME}s!`,W/2,H/2+20);
   const blink=Math.floor(Date.now()/500)%2;
   ctx.fillStyle='#4ade80';ctx.font='9px "Press Start 2P"';
-  if(blink)ctx.fillText('PRESS SPACE TO START',W/2,H/2+58);
+  if(blink)ctx.fillText('CLICK TO START',W/2,H/2+58);
   ctx.fillStyle='#555570';ctx.font='6px "Press Start 2P"';
   ctx.fillText('ARROW KEYS TO MOVE',W/2,H/2+80);
 }
@@ -454,7 +489,7 @@ function drawDeadScreen(){
   ctx.fillText('CAUGHT!',W/2,H/2-40);
   const blink=Math.floor(Date.now()/500)%2;
   ctx.fillStyle='#4ade80';ctx.font='9px "Press Start 2P"';
-  if(blink)ctx.fillText('PRESS SPACE TO RETRY',W/2,H/2+20);
+  if(blink)ctx.fillText('CLICK TO RETRY',W/2,H/2+20);
 }
 
 // ─── GAME LOOP ────────────────────────────────────────────────────
@@ -515,12 +550,38 @@ function loop(ts){
 // ─── INPUT ────────────────────────────────────────────────────────
 window.addEventListener('keydown',e=>{
   keys[e.key]=true;
-  if(e.key===' '){e.preventDefault();if(state!=='playing')initGame();}
   if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key))e.preventDefault();
 });
 window.addEventListener('keyup',e=>{keys[e.key]=false;});
 
+// Click or tap canvas to start / restart
+canvas.addEventListener('click',()=>{ if(state!=='playing')initGame(); });
+canvas.addEventListener('touchstart',e=>{ e.preventDefault(); if(state!=='playing')initGame(); },{passive:false});
+
 // ─── START ────────────────────────────────────────────────────────
+
+// ─── D-PAD TOUCH CONTROLS ─────────────────────────────────────────
+(function() {
+  const map = {
+    'btn-up':    'ArrowUp',
+    'btn-down':  'ArrowDown',
+    'btn-left':  'ArrowLeft',
+    'btn-right': 'ArrowRight'
+  };
+  Object.entries(map).forEach(([id, key]) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const press   = e => { e.preventDefault(); keys[key] = true;  el.classList.add('pressed'); };
+    const release = e => { e.preventDefault(); keys[key] = false; el.classList.remove('pressed'); };
+    el.addEventListener('touchstart',  press,   {passive: false});
+    el.addEventListener('touchend',    release, {passive: false});
+    el.addEventListener('touchcancel', release, {passive: false});
+    el.addEventListener('mousedown',   press);
+    el.addEventListener('mouseup',     release);
+    el.addEventListener('mouseleave',  release);
+  });
+})();
+
 loadLeaderboard();
 requestAnimationFrame(loop);
 </script>
