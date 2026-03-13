@@ -164,7 +164,7 @@ const SUPABASE_KEY  = 'sb_publishable_unLtgtg-joS2NuAcC1uQcg_zovy_RIq';
 // ═══════════════════════════════════════════════════════════════════
 
 const USING_SUPABASE = SUPABASE_URL !== 'YOUR_SUPABASE_URL';
-const CAT2_TIME = 20;
+const CAT2_TIME = 30;
 const TILE = 20;
 
 const canvas = document.getElementById('gameCanvas');
@@ -424,8 +424,8 @@ function moveWithSlide(e, dx, dy) {
 
 // ─── INIT ─────────────────────────────────────────────────────────
 function initGame() {
-  rat = {x:W/2, y:H/2, r:10, speed:2.4, dx:0, dy:0, tail:[]};
-  cats = [{x:30, y:30, r:13, speed:1.9, angle:0, pathTimer:0, waypoints:[], id:1}];
+  rat = {x:W/2, y:H/2, r:10, speed:2.7, dx:0, dy:0, tail:[]};
+  cats = [{x:30, y:30, r:13, speed:1.4, angle:0, pathTimer:0, waypoints:[], id:1}];
   score=0; elapsed=0; lastTime=null;
   particles=[]; cheese=null; cheeseTimer=0;
   cat2Warning=false; cat2WarnTimer=0;
@@ -642,12 +642,12 @@ function loop(ts){
       if(elapsed>=CAT2_TIME){
         cat2Warning=false;
         const sx=rat.x<W/2?W-30:30,sy=rat.y<H/2?H-30:30;
-        cats.push({x:sx,y:sy,r:13,speed:2.1,angle:0,pathTimer:0,waypoints:[],id:2});
+        cats.push({x:sx,y:sy,r:13,speed:1.6,angle:0,pathTimer:0,waypoints:[],id:2});
         spawnParticles(sx,sy,'#4070c0',22);
       }
     }
 
-    for(let cat of cats){cat.speed=(cat.id===1?1.9:2.1)+elapsed*0.018;updateCat(cat,dt);}
+    for(let cat of cats){cat.speed=(cat.id===1?1.4:1.6)+elapsed*0.010;updateCat(cat,dt);}
     updateParticles(dt);
 
     if(cheese){cheese.pulse+=dt*3;if(dist(rat.x,rat.y,cheese.x,cheese.y)<18){score+=10+Math.floor(elapsed/5)*5;spawnParticles(cheese.x,cheese.y,'#f5c842',20);cheese=null;cheeseTimer=4+Math.random()*8;}}
