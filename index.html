@@ -5,53 +5,67 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>🐀 RAT RACE</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
-  :root {
-    --bg:#0a0a0f; --panel:#12121a; --border:#2a2a40;
-    --accent:#f5c842; --green:#4ade80; --text:#e8e8f0; --dim:#555570;
-  }
-  *{margin:0;padding:0;box-sizing:border-box;}
-  body{
-    background:var(--bg);color:var(--text);
-    font-family:'Press Start 2P',monospace;
-    display:flex;align-items:center;justify-content:center;
-    min-height:100vh;overflow:hidden;
-  }
-  .wrapper{display:flex;gap:24px;align-items:flex-start;padding:20px;}
-  .game-area{display:flex;flex-direction:column;align-items:center;gap:10px;}
-  h1{font-size:22px;color:var(--accent);text-shadow:0 0 20px #f5c84288,3px 3px 0 #7a6420;letter-spacing:4px;}
-  .subtitle{font-size:6px;color:var(--dim);letter-spacing:2px;}
-  #gameCanvas{border:2px solid var(--border);box-shadow:0 0 40px #f5c84222;display:block;cursor:pointer;}
-  .hud{display:flex;gap:28px;}
-  .hud-item{display:flex;flex-direction:column;align-items:center;gap:4px;}
-  .hud-label{color:var(--dim);font-size:6px;}
-  .hud-value{color:var(--accent);font-size:13px;text-shadow:0 0 10px #f5c84266;}
-  .hint{font-size:6px;color:var(--dim);text-align:center;line-height:2;}
-  .play-counter{font-size:7px;color:var(--dim);text-align:center;}
-  .play-counter span{color:var(--accent);}
-
-  /* Scoreboard */
-  .scoreboard{background:var(--panel);border:2px solid var(--border);padding:20px 16px;width:260px;}
-  .scoreboard h2{font-size:10px;color:var(--accent);text-align:center;margin-bottom:16px;letter-spacing:2px;border-bottom:1px solid var(--border);padding-bottom:12px;}
-  .score-entry{display:flex;justify-content:space-between;align-items:center;padding:8px 4px;border-bottom:1px solid #1a1a28;font-size:8px;animation:fadeIn 0.3s ease;}
-  @keyframes fadeIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:translateX(0)}}
-  .score-rank{color:var(--dim);width:28px;flex-shrink:0;}
-  .score-rank.gold{color:#f5c842;} .score-rank.silver{color:#aab0c0;} .score-rank.bronze{color:#cd7f32;}
-  .score-name{color:var(--text);flex:1;margin:0 6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:110px;}
-  .score-val{color:var(--green);flex-shrink:0;}
-  .score-entry.new-entry{background:#1a2a1a;border-color:#2a4a2a;}
-  .no-scores{color:var(--dim);font-size:7px;text-align:center;margin-top:20px;line-height:2.2;}
-  .sb-status{font-size:6px;color:var(--dim);text-align:center;margin-top:8px;}
-  .sb-status.connected{color:#4ade8088;} .sb-status.error{color:#e0525288;}
-
-  /* Joystick */
-  #joystickWrap{display:none;justify-content:center;margin-top:4px;touch-action:none;user-select:none;}
-  @media(pointer:coarse){#joystickWrap{display:flex;}}
-  #joystickBase{width:140px;height:140px;border-radius:50%;background:#1a1c2e;border:2px solid #2a3060;position:relative;touch-action:none;}
-  #joystickKnob{width:56px;height:56px;border-radius:50%;background:var(--accent);box-shadow:0 0 14px #f5c84266;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;}
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+:root{--bg:#0a0a0f;--panel:#12121a;--border:#2a2a40;--accent:#f5c842;--green:#4ade80;--text:#e8e8f0;--dim:#555570;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Press Start 2P',monospace;display:flex;align-items:center;justify-content:center;min-height:100vh;overflow:hidden;}
+.wrapper{display:flex;gap:24px;align-items:flex-start;padding:20px;}
+.game-area{display:flex;flex-direction:column;align-items:center;gap:10px;}
+h1{font-size:22px;color:var(--accent);text-shadow:0 0 20px #f5c84288,3px 3px 0 #7a6420;letter-spacing:4px;}
+.subtitle{font-size:6px;color:var(--dim);letter-spacing:2px;}
+#gameCanvas{border:2px solid var(--border);box-shadow:0 0 40px #f5c84222;display:block;cursor:pointer;}
+.hud{display:flex;gap:28px;}
+.hud-item{display:flex;flex-direction:column;align-items:center;gap:4px;}
+.hud-label{color:var(--dim);font-size:6px;}
+.hud-value{color:var(--accent);font-size:13px;text-shadow:0 0 10px #f5c84266;}
+.hint{font-size:6px;color:var(--dim);text-align:center;line-height:2;}
+.play-counter{font-size:7px;color:var(--dim);text-align:center;}
+.play-counter span{color:var(--accent);}
+.scoreboard{background:var(--panel);border:2px solid var(--border);padding:20px 16px;width:260px;}
+.scoreboard h2{font-size:10px;color:var(--accent);text-align:center;margin-bottom:16px;letter-spacing:2px;border-bottom:1px solid var(--border);padding-bottom:12px;}
+.score-entry{display:flex;justify-content:space-between;align-items:center;padding:8px 4px;border-bottom:1px solid #1a1a28;font-size:8px;animation:fadeIn .3s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:translateX(0)}}
+.score-rank{color:var(--dim);width:28px;flex-shrink:0;}
+.score-rank.gold{color:#f5c842;}.score-rank.silver{color:#aab0c0;}.score-rank.bronze{color:#cd7f32;}
+.score-name{color:var(--text);flex:1;margin:0 6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:110px;}
+.score-val{color:var(--green);flex-shrink:0;}
+.score-entry.new-entry{background:#1a2a1a;border-color:#2a4a2a;}
+.no-scores{color:var(--dim);font-size:7px;text-align:center;margin-top:20px;line-height:2.2;}
+.sb-status{font-size:6px;color:var(--dim);text-align:center;margin-top:8px;}
+.sb-status.connected{color:#4ade8088;}.sb-status.error{color:#e0525288;}
+#nameModal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:100;align-items:center;justify-content:center;}
+#nameModal.visible{display:flex;}
+.modal-box{background:var(--panel);border:2px solid var(--border);padding:32px 28px;display:flex;flex-direction:column;align-items:center;gap:18px;max-width:360px;width:90%;}
+.modal-box h3{font-size:14px;color:#e05252;}
+.modal-score{font-size:20px;color:var(--green);}
+.modal-box p{font-size:7px;color:var(--dim);text-align:center;line-height:2;}
+#playerName{background:#0d0d18;border:2px solid var(--border);color:var(--text);font-family:'Press Start 2P',monospace;font-size:10px;padding:10px 14px;width:100%;text-align:center;outline:none;letter-spacing:2px;}
+#playerName:focus{border-color:var(--accent);}
+.modal-btns{display:flex;gap:12px;width:100%;}
+.btn{font-family:'Press Start 2P',monospace;font-size:8px;padding:10px 16px;cursor:pointer;border:2px solid;flex:1;text-align:center;}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:#000;}
+.btn-skip{background:transparent;border-color:var(--dim);color:var(--dim);}
+#joystickWrap{display:none;justify-content:center;margin-top:4px;touch-action:none;user-select:none;}
+@media(pointer:coarse){#joystickWrap{display:flex;}}
+#joystickBase{width:140px;height:140px;border-radius:50%;background:#1a1c2e;border:2px solid #2a3060;position:relative;touch-action:none;}
+#joystickKnob{width:56px;height:56px;border-radius:50%;background:var(--accent);position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;}
 </style>
 </head>
 <body>
+
+<div id="nameModal">
+  <div class="modal-box">
+    <h3>CAUGHT!</h3>
+    <div class="modal-score" id="modalScore">0 pts</div>
+    <p>Enter your name for the<br>global leaderboard:</p>
+    <input id="playerName" type="text" maxlength="16" placeholder="YOUR NAME" autocomplete="off" spellcheck="false">
+    <div class="modal-btns">
+      <button class="btn btn-skip" onclick="submitScore(null)">SKIP</button>
+      <button class="btn btn-primary" onclick="submitScore(document.getElementById('playerName').value)">SAVE</button>
+    </div>
+  </div>
+</div>
+
 <div class="wrapper">
   <div class="game-area">
     <h1>🐀 RAT RACE</h1>
@@ -62,392 +76,257 @@
       <div class="hud-item"><span class="hud-label">BEST</span><span class="hud-value" id="bestDisplay">0</span></div>
     </div>
     <canvas id="gameCanvas" width="520" height="420"></canvas>
-    <div class="hint">ARROW KEYS / JOYSTICK TO MOVE &nbsp;|&nbsp; CLICK TO START</div>
+    <div class="hint">ARROW KEYS TO MOVE &nbsp;|&nbsp; CLICK TO START</div>
     <div class="play-counter">🎮 PLAYED <span id="playCount">—</span> TIMES</div>
     <div id="joystickWrap"><div id="joystickBase"><div id="joystickKnob"></div></div></div>
   </div>
   <div class="scoreboard">
     <h2>🏆 LEADERBOARD</h2>
-    <div id="scoreList"><p class="no-scores">No scores yet.<br><br>Survive as long<br>as you can!</p></div>
+    <div id="scoreList"><p class="no-scores">No scores yet.<br><br>Be the first!</p></div>
     <p class="sb-status" id="sbStatus"></p>
   </div>
 </div>
 
 <script>
-// ═══════════════════════════════════════════
-// SUPABASE CONFIG
-// ═══════════════════════════════════════════
-const SUPABASE_URL = 'https://pygotatlaefnpdfophek.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_unLtgtg-joS2NuAcC1uQcg_zovy_RIq';
-const USING_SB = SUPABASE_URL !== 'YOUR_SUPABASE_URL';
+// ═══════════════ SUPABASE ═══════════════════════════════
+const SUPABASE_URL='https://pygotatlaefnpdfophek.supabase.co';
+const SUPABASE_KEY='sb_publishable_unLtgtg-joS2NuAcC1uQcg_zovy_RIq';
+const USING_SB=SUPABASE_URL!=='YOUR_SUPABASE_URL';
 
-// ═══════════════════════════════════════════
-// CANVAS
-// ═══════════════════════════════════════════
-const canvas = document.getElementById('gameCanvas');
-const ctx    = canvas.getContext('2d');
-const W = canvas.width, H = canvas.height;
-const TILE = 20;
-const CAT2_TIME = 30;
+// ═══════════════ MAZE ═══════════════════════════════════
+// 26 cols × 21 rows = 520 × 420 px. '#'=wall, ' '=floor.
+// Every corridor is 1 tile wide (20px). Entities use r=8
+// for wall collision so they fit through all corridors cleanly.
+const TILE=20, COLS=26, ROWS=21;
+const W=COLS*TILE, H=ROWS*TILE;   // 520 × 420
+const CAT2_TIME=30;
 
-// ═══════════════════════════════════════════
-// STATE
-// ═══════════════════════════════════════════
-let state = 'start'; // start | playing | dead
-let rat, cats, score, elapsed, lastTime;
-let keys = {};
-let particles = [];
-let cheese = null, cheeseTimer = 0;
-let cat2Warning = false, cat2WarnTimer = 0;
-let highScore = 0;
-let localScores = [];
-
-// ═══════════════════════════════════════════
-// OBSTACLES — wide open corridors, no tight spots
-// Every gap between an obstacle and a wall/edge is >= 50px
-// ═══════════════════════════════════════════
-const OBSTACLES = [
-  // 6 small square pillars — fully isolated, huge open space around each
-  {x:178, y:128, w:24, h:24},
-  {x:318, y:128, w:24, h:24},
-  {x:108, y:198, w:24, h:24},
-  {x:388, y:198, w:24, h:24},
-  {x:178, y:268, w:24, h:24},
-  {x:318, y:268, w:24, h:24},
+const MAZE=[
+  '##########################',  //  0
+  '#  ####  #      #  ####  #',  //  1
+  '#  ####  #      #  ####  #',  //  2
+  '#        #      #        #',  //  3
+  '#  ####  ##    ##  ####  #',  //  4
+  '#                        #',  //  5
+  '#  ####  #      #  ####  #',  //  6
+  '#  ####  #      #  ####  #',  //  7
+  '#        #      #        #',  //  8
+  '####  #####    #####  ####',  //  9
+  '#                        #',  // 10  ← rat spawns here (col 13)
+  '####  #####    #####  ####',  // 11
+  '#        #      #        #',  // 12
+  '#  ####  #      #  ####  #',  // 13
+  '#  ####  #      #  ####  #',  // 14
+  '#                        #',  // 15
+  '#  ####  ##    ##  ####  #',  // 16
+  '#        #      #        #',  // 17
+  '#  ####  #      #  ####  #',  // 18
+  '#  ####  #      #  ####  #',  // 19
+  '##########################',  // 20
 ];
 
-// ═══════════════════════════════════════════
-// NAV GRID (BFS pathfinding for cats)
-// ═══════════════════════════════════════════
-const CELL = 20;
-const GCOLS = Math.ceil(W / CELL);
-const GROWS = Math.ceil(H / CELL);
-let navGrid; // Uint8Array: 1=walkable
+const MAP=MAZE.map(r=>[...r].map(c=>c==='#'?1:0));
 
-function buildNavGrid() {
-  navGrid = new Uint8Array(GCOLS * GROWS);
-  const PAD = 16; // must be > cat radius (13)
-  for (let r = 0; r < GROWS; r++) {
-    for (let c = 0; c < GCOLS; c++) {
-      const cx = c * CELL + CELL / 2;
-      const cy = r * CELL + CELL / 2;
-      let ok = cx >= PAD && cy >= PAD && cx <= W - PAD && cy <= H - PAD;
-      if (ok) {
-        for (const o of OBSTACLES) {
-          if (cx + PAD > o.x && cx - PAD < o.x + o.w &&
-              cy + PAD > o.y && cy - PAD < o.y + o.h) { ok = false; break; }
-        }
-      }
-      navGrid[r * GCOLS + c] = ok ? 1 : 0;
+function isWall(c,r){return c<0||c>=COLS||r<0||r>=ROWS||MAP[r][c]===1;}
+
+// ─── Tile-based collision ────────────────────────────────
+// Check the 4 cardinal edge-points of a circle against wall tiles.
+// cr = collision radius (kept at 8 so entities fit in 20px corridors).
+function hitWall(x,y,cr){
+  const p=cr*0.88;
+  return isWall((x-p)/TILE|0, y/TILE|0)||
+         isWall((x+p)/TILE|0, y/TILE|0)||
+         isWall(x/TILE|0, (y-p)/TILE|0)||
+         isWall(x/TILE|0, (y+p)/TILE|0);
+}
+
+function slide(e,dx,dy){
+  if(!dx&&!dy)return;
+  if(!hitWall(e.x+dx,e.y+dy,e.cr)){e.x+=dx;e.y+=dy;return;}
+  if(!hitWall(e.x+dx,e.y,   e.cr)){e.x+=dx;return;}
+  if(!hitWall(e.x,   e.y+dy,e.cr)){e.y+=dy;}
+}
+
+// ─── BFS (4-directional on tile grid) ────────────────────
+function bfs(sx,sy,gx,gy){
+  const sc=sx/TILE|0, sr=sy/TILE|0;
+  const gc=gx/TILE|0, gr=gy/TILE|0;
+  if(sc===gc&&sr===gr)return[];
+
+  const key=(c,r)=>r*COLS+c;
+  const vis=new Uint8Array(COLS*ROWS);
+  const par=new Int32Array(COLS*ROWS).fill(-1);
+  const sk=key(sc,sr),gk=key(gc,gr);
+  const q=[sk]; vis[sk]=1;
+  let found=false;
+
+  while(q.length){
+    const cur=q.shift();
+    if(cur===gk){found=true;break;}
+    const cc=cur%COLS,cr=(cur/COLS)|0;
+    for(const[dc,dr]of[[1,0],[-1,0],[0,1],[0,-1]]){
+      const nc=cc+dc,nr=cr+dr,nk=key(nc,nr);
+      if(vis[nk]||isWall(nc,nr))continue;
+      vis[nk]=1;par[nk]=cur;q.push(nk);
     }
   }
+  if(!found)return[];
+
+  const path=[];
+  let cur=gk;
+  while(cur!==sk&&par[cur]!==-1){
+    const c=cur%COLS,r=(cur/COLS)|0;
+    path.unshift({x:c*TILE+TILE/2,y:r*TILE+TILE/2});
+    cur=par[cur];
+  }
+  return path;
 }
 
-function nearestWalkable(col, row) {
-  col = Math.max(0, Math.min(GCOLS-1, col));
-  row = Math.max(0, Math.min(GROWS-1, row));
-  if (navGrid[row * GCOLS + col]) return {col, row};
-  for (let radius = 1; radius < 8; radius++) {
-    for (let dr = -radius; dr <= radius; dr++) {
-      for (let dc = -radius; dc <= radius; dc++) {
-        if (Math.abs(dr) !== radius && Math.abs(dc) !== radius) continue;
-        const nc = col+dc, nr = row+dr;
-        if (nc<0||nr<0||nc>=GCOLS||nr>=GROWS) continue;
-        if (navGrid[nr * GCOLS + nc]) return {col:nc, row:nr};
-      }
-    }
-  }
-  return {col, row};
-}
+// ═══════════════ STATE ══════════════════════════════════
+const canvas=document.getElementById('gameCanvas');
+const ctx=canvas.getContext('2d');
+let state='start';
+let rat,cats,score,elapsed,lastTime;
+let keys={};
+let particles=[];
+let cheese=null,cheeseTimer=0;
+let cat2Warning=false,cat2WarnTimer=0;
+let pendingScore=0,localScores=[];
 
-// BFS returning world-space waypoints
-function bfsPath(sx, sy, gx, gy) {
-  let sc = nearestWalkable(Math.floor(sx/CELL), Math.floor(sy/CELL));
-  let gc = nearestWalkable(Math.floor(gx/CELL), Math.floor(gy/CELL));
-
-  const key  = (c,r) => r * GCOLS + c;
-  const sk = key(sc.col, sc.row), gk = key(gc.col, gc.row);
-  if (sk === gk) return [{x: gx, y: gy}];
-
-  const parent = new Int32Array(GCOLS * GROWS).fill(-1);
-  const visited = new Uint8Array(GCOLS * GROWS);
-  const q = [sk];
-  visited[sk] = 1;
-  const DIRS = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,1],[1,-1],[-1,-1]];
-  let found = false;
-
-  while (q.length) {
-    const cur = q.shift();
-    if (cur === gk) { found = true; break; }
-    const cc = cur % GCOLS, cr = (cur / GCOLS)|0;
-    for (const [dc,dr] of DIRS) {
-      const nc=cc+dc, nr=cr+dr;
-      if (nc<0||nr<0||nc>=GCOLS||nr>=GROWS) continue;
-      const nk = key(nc, nr);
-      if (visited[nk] || !navGrid[nk]) continue;
-      // diagonal: both cardinal neighbours must be walkable
-      if (dc && dr && (!navGrid[key(cc+dc,cr)] || !navGrid[key(cc,cr+dr)])) continue;
-      visited[nk] = 1; parent[nk] = cur; q.push(nk);
-    }
-  }
-
-  if (!found) return [{x:gx, y:gy}];
-
-  // Trace back → forward path
-  const path = [];
-  let cur = gk;
-  while (cur !== sk && parent[cur] !== -1) {
-    const c = cur % GCOLS, r = (cur/GCOLS)|0;
-    path.unshift({x: c*CELL+CELL/2, y: r*CELL+CELL/2});
-    cur = parent[cur];
-  }
-  // Replace final waypoint with actual goal pos
-  if (path.length) path[path.length-1] = {x:gx, y:gy};
-  return path.length ? path : [{x:gx, y:gy}];
-}
-
-// ═══════════════════════════════════════════
-// COLLISION
-// ═══════════════════════════════════════════
-function obstacleHit(x, y, r) {
-  for (const o of OBSTACLES) {
-    const nx = Math.max(o.x, Math.min(x, o.x+o.w));
-    const ny = Math.max(o.y, Math.min(y, o.y+o.h));
-    if ((x-nx)*(x-nx)+(y-ny)*(y-ny) < r*r) return o;
-  }
-  return null;
-}
-
-function slide(e, dx, dy) {
-  if (!dx && !dy) return;
-  const r = e.r;
-  const clamp = (v,lo,hi) => v<lo?lo:v>hi?hi:v;
-  const tx = clamp(e.x+dx, r, W-r), ty = clamp(e.y+dy, r, H-r);
-  if (!obstacleHit(tx,ty,r))  { e.x=tx; e.y=ty; return; }
-  if (!obstacleHit(tx,e.y,r)) { e.x=tx; return; }
-  if (!obstacleHit(e.x,ty,r)) { e.y=ty; return; }
-  // push out of overlap
-  const h = obstacleHit(e.x, e.y, r);
-  if (h) {
-    const ex=e.x-(h.x+h.w/2), ey=e.y-(h.y+h.h/2), len=Math.hypot(ex,ey)||1;
-    e.x = clamp(e.x+(ex/len)*3, r, W-r);
-    e.y = clamp(e.y+(ey/len)*3, r, H-r);
-  }
-}
-
-// ═══════════════════════════════════════════
-// INIT
-// ═══════════════════════════════════════════
-function initGame() {
-  buildNavGrid();
-  rat  = {x:W/2, y:H/2, r:10, speed:2.7, dx:0, dy:0, tail:[]};
-  cats = [{x:30, y:30, r:13, speed:1.4, angle:0, pathTimer:0, waypoints:[], id:1}];
-  score=0; elapsed=0; lastTime=null;
-  particles=[]; cheese=null; cheeseTimer=0;
-  cat2Warning=false; cat2WarnTimer=0;
+function initGame(){
+  rat={x:13*TILE+TILE/2,y:10*TILE+TILE/2,r:10,cr:8,speed:2.6,dx:0,dy:0,tail:[]};
+  cats=[{x:TILE+TILE/2,y:TILE+TILE/2,r:12,cr:8,speed:1.4,angle:0,pathTimer:0,waypoints:[],id:1}];
+  score=0;elapsed=0;lastTime=null;
+  particles=[];cheese=null;cheeseTimer=2;
+  cat2Warning=false;cat2WarnTimer=0;
   state='playing';
   spawnCheese();
   incrementPlayCount();
 }
 
-// ═══════════════════════════════════════════
-// CHEESE
-// ═══════════════════════════════════════════
-function spawnCheese() {
-  for (let i=0; i<400; i++) {
-    const cx=50+Math.random()*(W-100), cy=50+Math.random()*(H-100);
-    if (!obstacleHit(cx,cy,16) && dist(cx,cy,rat.x,rat.y)>100 &&
-        cats.every(c=>dist(cx,cy,c.x,c.y)>80)) {
-      cheese={x:cx,y:cy,pulse:0}; return;
-    }
+function spawnCheese(){
+  for(let i=0;i<400;i++){
+    const col=1+Math.floor(Math.random()*(COLS-2));
+    const row=1+Math.floor(Math.random()*(ROWS-2));
+    if(isWall(col,row))continue;
+    const cx=col*TILE+TILE/2,cy=row*TILE+TILE/2;
+    if(dist(cx,cy,rat.x,rat.y)<60)continue;
+    if(cats.every(c=>dist(cx,cy,c.x,c.y)>50)){cheese={x:cx,y:cy,pulse:0};return;}
   }
 }
 
-// ═══════════════════════════════════════════
-// CAT AI
-// ═══════════════════════════════════════════
-function updateCat(cat, dt) {
-  cat.pathTimer -= dt;
-  if (cat.pathTimer <= 0 || !cat.waypoints.length) {
-    cat.waypoints  = bfsPath(cat.x, cat.y, rat.x, rat.y);
-    cat.pathTimer  = dist(cat.x,cat.y,rat.x,rat.y) < 150 ? 0.06 : 0.18;
+// ─── Cat AI ──────────────────────────────────────────────
+function updateCat(cat,dt){
+  cat.pathTimer-=dt;
+  const d=dist(cat.x,cat.y,rat.x,rat.y);
+
+  // Close enough → go straight (avoids waypoint overshoot near rat)
+  if(d<TILE*1.5){
+    const dx=rat.x-cat.x,dy=rat.y-cat.y,len=d||1;
+    slide(cat,(dx/len)*cat.speed*dt*60,(dy/len)*cat.speed*dt*60);
+    cat.angle=Math.atan2(dy,dx);
+    return;
   }
-  const wp = cat.waypoints[0];
-  if (!wp) return;
-  const dx=wp.x-cat.x, dy=wp.y-cat.y, d=Math.hypot(dx,dy);
-  if (d < CELL * 1.2) { cat.waypoints.shift(); return; }
-  const spd = cat.speed * dt * 60;
-  slide(cat, (dx/d)*spd, (dy/d)*spd);
-  cat.angle = Math.atan2(rat.y-cat.y, rat.x-cat.x);
+
+  if(cat.pathTimer<=0||!cat.waypoints.length){
+    cat.waypoints=bfs(cat.x,cat.y,rat.x,rat.y);
+    cat.pathTimer=d<150?0.08:0.2;
+  }
+
+  if(!cat.waypoints.length){
+    const dx=rat.x-cat.x,dy=rat.y-cat.y,len=d||1;
+    slide(cat,(dx/len)*cat.speed*dt*60,(dy/len)*cat.speed*dt*60);
+    cat.angle=Math.atan2(dy,dx);return;
+  }
+
+  const wp=cat.waypoints[0];
+  const dx=wp.x-cat.x,dy=wp.y-cat.y,wd=Math.hypot(dx,dy);
+  if(wd<TILE*0.55){cat.waypoints.shift();return;}
+  slide(cat,(dx/wd)*cat.speed*dt*60,(dy/wd)*cat.speed*dt*60);
+  cat.angle=Math.atan2(rat.y-cat.y,rat.x-cat.x);
 }
 
-// ═══════════════════════════════════════════
-// RAT
-// ═══════════════════════════════════════════
-function updateRat(dt) {
-  let dx=0, dy=0;
-  if (keys['ArrowLeft'])  dx-=1;
-  if (keys['ArrowRight']) dx+=1;
-  if (keys['ArrowUp'])    dy-=1;
-  if (keys['ArrowDown'])  dy+=1;
-  const len=Math.hypot(dx,dy); if(len>0){dx/=len;dy/=len;}
-  slide(rat, dx*rat.speed*dt*60, dy*rat.speed*dt*60);
-  rat.dx=dx; rat.dy=dy;
+function updateRat(dt){
+  let dx=0,dy=0;
+  if(keys['ArrowLeft'])dx-=1;if(keys['ArrowRight'])dx+=1;
+  if(keys['ArrowUp'])dy-=1;if(keys['ArrowDown'])dy+=1;
+  const len=Math.hypot(dx,dy);if(len>0){dx/=len;dy/=len;}
+  slide(rat,dx*rat.speed*dt*60,dy*rat.speed*dt*60);
+  rat.dx=dx;rat.dy=dy;
   rat.tail.unshift({x:rat.x,y:rat.y});
-  if (rat.tail.length>14) rat.tail.pop();
+  if(rat.tail.length>14)rat.tail.pop();
 }
 
-// ═══════════════════════════════════════════
-// PARTICLES
-// ═══════════════════════════════════════════
 function burst(x,y,col,n=14){
-  for(let i=0;i<n;i++){
-    const a=Math.random()*Math.PI*2,s=1.5+Math.random()*3;
-    particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:1,decay:0.02+Math.random()*0.025,sz:2+Math.random()*4,col});
-  }
+  for(let i=0;i<n;i++){const a=Math.random()*Math.PI*2,s=1.5+Math.random()*3;particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:1,decay:.02+Math.random()*.025,sz:2+Math.random()*4,col});}
 }
 function tickParticles(dt){
-  for(let i=particles.length-1;i>=0;i--){
-    const p=particles[i];
-    p.x+=p.vx*dt*60; p.y+=p.vy*dt*60; p.vy+=0.07*dt*60;
-    p.life-=p.decay*dt*60; if(p.life<=0)particles.splice(i,1);
+  for(let i=particles.length-1;i>=0;i--){const p=particles[i];p.x+=p.vx*dt*60;p.y+=p.vy*dt*60;p.vy+=.07*dt*60;p.life-=p.decay*dt*60;if(p.life<=0)particles.splice(i,1);}
+}
+
+const dist=(ax,ay,bx,by)=>Math.hypot(ax-bx,ay-by);
+const pps=()=>1+Math.floor(elapsed/12);
+
+// ═══════════════ DRAWING ════════════════════════════════
+function drawMaze(){
+  // Floor
+  ctx.fillStyle='#07070f';ctx.fillRect(0,0,W,H);
+  // Floor dots
+  ctx.fillStyle='#18182a';
+  for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)
+    if(!MAP[r][c])ctx.fillRect(c*TILE+TILE/2-1,r*TILE+TILE/2-1,2,2);
+  // Wall fill
+  ctx.fillStyle='#10143a';
+  for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)
+    if(MAP[r][c])ctx.fillRect(c*TILE,r*TILE,TILE,TILE);
+  // Glowing wall-edge lines
+  ctx.save();
+  ctx.strokeStyle='#2244cc';ctx.lineWidth=2;
+  ctx.shadowColor='#3355ff';ctx.shadowBlur=5;ctx.lineCap='square';
+  for(let r=0;r<ROWS;r++){
+    for(let c=0;c<COLS;c++){
+      if(!MAP[r][c])continue;
+      const x=c*TILE,y=r*TILE;
+      if(!isWall(c,r-1)){ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+TILE,y);ctx.stroke();}
+      if(!isWall(c,r+1)){ctx.beginPath();ctx.moveTo(x,y+TILE);ctx.lineTo(x+TILE,y+TILE);ctx.stroke();}
+      if(!isWall(c-1,r)){ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x,y+TILE);ctx.stroke();}
+      if(!isWall(c+1,r)){ctx.beginPath();ctx.moveTo(x+TILE,y);ctx.lineTo(x+TILE,y+TILE);ctx.stroke();}
+    }
   }
-}
-
-// ═══════════════════════════════════════════
-// HELPERS
-// ═══════════════════════════════════════════
-const dist = (ax,ay,bx,by) => Math.hypot(ax-bx,ay-by);
-const pps  = () => 1 + Math.floor(elapsed/12);
-
-// ═══════════════════════════════════════════
-// SUPABASE
-// ═══════════════════════════════════════════
-async function sbFetch(path, method='GET', body=null){
-  const h={'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':method==='POST'?'return=minimal':''};
-  const r=await fetch(`${SUPABASE_URL}/rest/v1/${path}`,{method,headers:h,body:body?JSON.stringify(body):null});
-  if(!r.ok) throw new Error(r.status);
-  return method==='GET'?r.json():r;
-}
-
-async function loadLeaderboard(){
-  if(!USING_SB){renderBoard(localScores);return;}
-  try{
-    const d=await sbFetch('high_scores?select=name,score&order=score.desc&limit=20');
-    renderBoard(d); setStatus('🟢 GLOBAL LEADERBOARD','connected');
-    if(d.length) document.getElementById('bestDisplay').textContent=d[0].score;
-  }catch(e){renderBoard(localScores);setStatus('⚠ OFFLINE','error');}
-}
-
-async function saveScore(sc){
-  if(!USING_SB){
-    localScores.push({name:'YOU',score:sc});
-    localScores.sort((a,b)=>b.score-a.score);
-    if(localScores.length>20)localScores.length=20;
-    renderBoard(localScores,sc); return;
-  }
-  try{await sbFetch('high_scores','POST',{name:'PLAYER',score:sc});await loadLeaderboard();}
-  catch(e){setStatus('⚠ SAVE FAILED','error');}
-}
-
-function setStatus(msg,cls){const el=document.getElementById('sbStatus');el.textContent=msg;el.className='sb-status '+cls;}
-
-function renderBoard(entries,hl=null){
-  const el=document.getElementById('scoreList');
-  if(!entries?.length){el.innerHTML='<p class="no-scores">No scores yet.<br><br>Survive as long<br>as you can!</p>';return;}
-  const medals=['gold','silver','bronze'],ranks=['1ST','2ND','3RD'];
-  const hi=hl!=null?entries.findIndex(x=>x.score===hl):-1;
-  el.innerHTML=entries.map((s,i)=>`<div class="score-entry${i===hi?' new-entry':''}">
-    <span class="score-rank ${medals[i]||''}">${ranks[i]||`${i+1}TH`}</span>
-    <span class="score-name">${esc(s.name||'PLAYER')}</span>
-    <span class="score-val">${s.score}</span>
-  </div>`).join('');
-  if(!USING_SB)setStatus('📵 LOCAL MODE','');
-}
-
-const esc = s=>s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-
-async function incrementPlayCount(){
-  if(!USING_SB){
-    const el=document.getElementById('playCount');
-    el.textContent=((parseInt(el.textContent)||0)+1).toLocaleString(); return;
-  }
-  try{await sbFetch('plays','POST',{played_at:new Date().toISOString()});}catch(e){}
-  try{
-    const r=await fetch(`${SUPABASE_URL}/rest/v1/plays?select=id`,{headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Prefer':'count=exact','Range':'0-0'}});
-    const range=r.headers.get('content-range');
-    if(range){const t=parseInt(range.split('/')[1]);if(!isNaN(t))document.getElementById('playCount').textContent=t.toLocaleString();}
-  }catch(e){}
-}
-
-// ═══════════════════════════════════════════
-// DRAWING
-// ═══════════════════════════════════════════
-function drawBg(){
-  ctx.fillStyle='#0d0d18';ctx.fillRect(0,0,W,H);
-  ctx.strokeStyle='#14142a';ctx.lineWidth=1;
-  for(let x=0;x<W;x+=TILE){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
-  for(let y=0;y<H;y+=TILE){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
-}
-
-function drawObstacles(){
-  for(const o of OBSTACLES){
-    const cx=o.x+o.w/2, cy=o.y+o.h/2, rx=o.w/2, ry=o.h/2;
-    // Shadow
-    ctx.save();
-    ctx.shadowColor='#000';ctx.shadowBlur=8;
-    ctx.fillStyle='#1a1c2e';
-    ctx.beginPath();ctx.ellipse(cx,cy,rx,ry,0,0,Math.PI*2);ctx.fill();
-    ctx.restore();
-    // Border
-    ctx.strokeStyle='#2a3060';ctx.lineWidth=2;
-    ctx.beginPath();ctx.ellipse(cx,cy,rx,ry,0,0,Math.PI*2);ctx.stroke();
-    // Inner highlight
-    ctx.strokeStyle='#3a4080';ctx.lineWidth=1;
-    ctx.beginPath();ctx.ellipse(cx-1,cy-1,rx-3,ry-3,0,0,Math.PI*2);ctx.stroke();
-  }
+  ctx.restore();
 }
 
 function drawRat(alpha){
   ctx.save();ctx.globalAlpha=alpha;
-  // Tail in world space
   if(rat.tail.length>1){
     ctx.strokeStyle='#a07848';ctx.lineCap='round';
     ctx.beginPath();ctx.moveTo(rat.tail[0].x,rat.tail[0].y);
-    for(let i=1;i<rat.tail.length;i++){ctx.lineWidth=Math.max(0.5,2.2-i*0.15);ctx.lineTo(rat.tail[i].x,rat.tail[i].y);}
+    for(let i=1;i<rat.tail.length;i++){ctx.lineWidth=Math.max(.5,2.2-i*.15);ctx.lineTo(rat.tail[i].x,rat.tail[i].y);}
     ctx.stroke();
   }
   ctx.translate(rat.x,rat.y);
   const goLeft=rat.dx<-0.1;
   if(goLeft){ctx.scale(-1,1);ctx.rotate(Math.atan2(rat.dy,-rat.dx));}
-  else{ctx.rotate(Math.atan2(rat.dy,rat.dx));}
-  // Body
+  else ctx.rotate(Math.atan2(rat.dy,rat.dx));
   ctx.fillStyle='#c49a5a';ctx.beginPath();ctx.ellipse(0,0,11,8,0,0,Math.PI*2);ctx.fill();
-  // Head
   ctx.fillStyle='#d4a96a';ctx.beginPath();ctx.ellipse(10,0,8,6,0,0,Math.PI*2);ctx.fill();
-  // Ear
-  ctx.fillStyle='#e8b88a';ctx.beginPath();ctx.ellipse(8,-6,4,3,-0.5,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle='#c4856a';ctx.beginPath();ctx.ellipse(8,-6,2,1.5,-0.5,0,Math.PI*2);ctx.fill();
-  // Eye
+  ctx.fillStyle='#e8b88a';ctx.beginPath();ctx.ellipse(8,-6,4,3,-.5,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#c4856a';ctx.beginPath();ctx.ellipse(8,-6,2,1.5,-.5,0,Math.PI*2);ctx.fill();
   ctx.fillStyle='#111';ctx.beginPath();ctx.arc(15,-2,2,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(15.5,-2.5,0.7,0,Math.PI*2);ctx.fill();
-  // Nose
+  ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(15.5,-2.5,.7,0,Math.PI*2);ctx.fill();
   ctx.fillStyle='#e87090';ctx.beginPath();ctx.arc(18,0,1.5,0,Math.PI*2);ctx.fill();
-  // Whiskers
-  ctx.strokeStyle='#e8d0a8';ctx.lineWidth=0.7;
+  ctx.strokeStyle='#e8d0a8';ctx.lineWidth=.7;
   for(const s of[-1,1]){ctx.beginPath();ctx.moveTo(16,s*2);ctx.lineTo(22,s*4);ctx.stroke();ctx.beginPath();ctx.moveTo(16,s);ctx.lineTo(22,s);ctx.stroke();}
   ctx.restore();
 }
 
 function drawCat(cat){
   ctx.save();ctx.translate(cat.x,cat.y);
-  const goLeft = Math.cos(cat.angle) < -0.1;
-  if(goLeft){ ctx.scale(-1,1); ctx.rotate(Math.PI - cat.angle); }
-  else       { ctx.rotate(cat.angle); }
+  const goLeft=Math.cos(cat.angle)<-0.1;
+  if(goLeft){ctx.scale(-1,1);ctx.rotate(Math.PI-cat.angle);}
+  else ctx.rotate(cat.angle);
   const two=cat.id===2;
-  const [bC,hC,eC,sC,iC,nC]=two
-    ?['#305090','#4070c0','#f0d020','#203570','#8090d0','#a0b8f0']
-    :['#c04040','#e05252','#80e820','#a03030','#f08080','#f0a0a0'];
+  const[bC,hC,eC,sC,iC,nC]=two?['#305090','#4070c0','#f0d020','#203570','#8090d0','#a0b8f0']:['#c04040','#e05252','#80e820','#a03030','#f08080','#f0a0a0'];
   ctx.fillStyle=bC;ctx.beginPath();ctx.ellipse(0,0,14,10,0,0,Math.PI*2);ctx.fill();
   ctx.fillStyle=hC;ctx.beginPath();ctx.ellipse(13,0,10,9,0,0,Math.PI*2);ctx.fill();
   ctx.fillStyle=hC;
@@ -456,68 +335,62 @@ function drawCat(cat){
   ctx.fillStyle=iC;ctx.beginPath();ctx.moveTo(11,-9);ctx.lineTo(15,-14);ctx.lineTo(18,-9);ctx.closePath();ctx.fill();
   ctx.fillStyle=eC;ctx.beginPath();ctx.ellipse(16,-2,3,4,0,0,Math.PI*2);ctx.fill();
   ctx.fillStyle='#111';ctx.beginPath();ctx.ellipse(16,-2,1,3.5,0,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(17.5,-3,0.8,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(17.5,-3,.8,0,Math.PI*2);ctx.fill();
   ctx.fillStyle=nC;ctx.beginPath();ctx.arc(22,0,2,0,Math.PI*2);ctx.fill();
   ctx.strokeStyle=bC;ctx.lineWidth=1;
   ctx.beginPath();ctx.moveTo(22,1);ctx.lineTo(20,4);ctx.stroke();
   ctx.beginPath();ctx.moveTo(22,1);ctx.lineTo(24,4);ctx.stroke();
-  ctx.strokeStyle='#ffffff88';ctx.lineWidth=0.8;
+  ctx.strokeStyle='#ffffff88';ctx.lineWidth=.8;
   for(const s of[-1,1]){ctx.beginPath();ctx.moveTo(20,s*2);ctx.lineTo(30,s*5);ctx.stroke();ctx.beginPath();ctx.moveTo(20,0);ctx.lineTo(30,0);ctx.stroke();}
   ctx.strokeStyle=sC;ctx.lineWidth=1.5;
-  for(const i of[-5,0,5]){ctx.beginPath();ctx.moveTo(i-2,-8);ctx.lineTo(i,8);ctx.stroke();}
+  for(const ii of[-5,0,5]){ctx.beginPath();ctx.moveTo(ii-2,-8);ctx.lineTo(ii,8);ctx.stroke();}
   ctx.restore();
 }
 
 function drawCheese(){
   ctx.save();ctx.translate(cheese.x,cheese.y);
-  const sc=1+Math.sin(cheese.pulse)*0.1;ctx.scale(sc,sc);
+  const sc=1+Math.sin(cheese.pulse)*.1;ctx.scale(sc,sc);
   ctx.shadowColor='#f5c842';ctx.shadowBlur=16;
   ctx.fillStyle='#f5c842';ctx.beginPath();ctx.moveTo(0,-14);ctx.lineTo(14,8);ctx.lineTo(-14,8);ctx.closePath();ctx.fill();
   ctx.shadowBlur=0;ctx.fillStyle='#c9962a';
-  ctx.beginPath();ctx.arc(-4,2,3,0,Math.PI*2);ctx.fill();
-  ctx.beginPath();ctx.arc(6,4,2,0,Math.PI*2);ctx.fill();
-  ctx.beginPath();ctx.arc(1,-5,2,0,Math.PI*2);ctx.fill();
+  [[-4,2,3],[6,4,2],[1,-5,2]].forEach(([x,y,r])=>{ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();});
   ctx.restore();
 }
 
 function drawDanger(){
   for(const cat of cats){
-    const d=dist(rat.x,rat.y,cat.x,cat.y),maxD=180;
+    const d=dist(rat.x,rat.y,cat.x,cat.y),maxD=160;
     if(d<maxD){
       const col=cat.id===2?'80,120,255':'255,50,50';
-      const g=ctx.createRadialGradient(cat.x,cat.y,8,cat.x,cat.y,maxD);
-      g.addColorStop(0,`rgba(${col},${(1-d/maxD)*0.2})`);g.addColorStop(1,`rgba(${col},0)`);
+      const g=ctx.createRadialGradient(cat.x,cat.y,6,cat.x,cat.y,maxD);
+      g.addColorStop(0,`rgba(${col},${(1-d/maxD)*.18})`);g.addColorStop(1,`rgba(${col},0)`);
       ctx.fillStyle=g;ctx.beginPath();ctx.arc(cat.x,cat.y,maxD,0,Math.PI*2);ctx.fill();
     }
   }
 }
 
 function drawStartScreen(){
-  ctx.fillStyle='rgba(0,0,0,0.84)';ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='rgba(0,0,0,.86)';ctx.fillRect(0,0,W,H);
   ctx.textAlign='center';
   ctx.fillStyle='#f5c842';ctx.font='20px "Press Start 2P"';ctx.fillText('🐀 RAT RACE',W/2,H/2-75);
   ctx.fillStyle='#888899';ctx.font='7px "Press Start 2P"';
-  ctx.fillText('A cat is hunting you.',W/2,H/2-32);
-  ctx.fillText('Survive as long as you can!',W/2,H/2-14);
-  ctx.fillText('Grab cheese for bonus points!',W/2,H/2+4);
+  ctx.fillText('Navigate the maze!',W/2,H/2-32);
+  ctx.fillText('Survive the cats!',W/2,H/2-14);
+  ctx.fillText('Grab cheese for bonus points!',W/2,H/2+6);
   ctx.fillStyle='#6080d0';ctx.font='6px "Press Start 2P"';
-  ctx.fillText(`A 2nd cat joins after ${CAT2_TIME}s!`,W/2,H/2+24);
+  ctx.fillText(`A 2nd cat joins after ${CAT2_TIME}s!`,W/2,H/2+26);
   if(Math.floor(Date.now()/500)%2){
-    ctx.fillStyle='#4ade80';ctx.font='9px "Press Start 2P"';ctx.fillText('CLICK TO START',W/2,H/2+60);
+    ctx.fillStyle='#4ade80';ctx.font='9px "Press Start 2P"';ctx.fillText('CLICK TO START',W/2,H/2+58);
   }
-  ctx.fillStyle='#555570';ctx.font='6px "Press Start 2P"';ctx.fillText('ARROW KEYS / JOYSTICK TO MOVE',W/2,H/2+80);
+  ctx.fillStyle='#555570';ctx.font='6px "Press Start 2P"';ctx.fillText('ARROW KEYS TO MOVE',W/2,H/2+80);
 }
 
 function drawDeadScreen(){
-  ctx.fillStyle='rgba(0,0,0,0.82)';ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='rgba(0,0,0,.82)';ctx.fillRect(0,0,W,H);
   ctx.textAlign='center';
-  ctx.fillStyle='#e05252';ctx.font='18px "Press Start 2P"';ctx.fillText('CAUGHT!',W/2,H/2-55);
-  ctx.fillStyle='#f5c842';ctx.font='11px "Press Start 2P"';ctx.fillText(`SCORE: ${Math.floor(score)}`,W/2,H/2-22);
-  if(Math.floor(score)>=highScore&&score>0){
-    ctx.fillStyle='#4ade80';ctx.font='8px "Press Start 2P"';ctx.fillText('🏆 NEW HIGH SCORE!',W/2,H/2+4);
-  }
+  ctx.fillStyle='#e05252';ctx.font='18px "Press Start 2P"';ctx.fillText('CAUGHT!',W/2,H/2-40);
   if(Math.floor(Date.now()/500)%2){
-    ctx.fillStyle='#4ade80';ctx.font='9px "Press Start 2P"';ctx.fillText('CLICK TO RETRY',W/2,H/2+40);
+    ctx.fillStyle='#4ade80';ctx.font='9px "Press Start 2P"';ctx.fillText('CLICK TO RETRY',W/2,H/2+20);
   }
 }
 
@@ -528,115 +401,188 @@ function drawCat2Warning(){
   ctx.fillText('⚠  2ND CAT INCOMING!  ⚠',W/2,24);ctx.restore();
 }
 
-// ═══════════════════════════════════════════
-// GAME LOOP
-// ═══════════════════════════════════════════
+// ═══════════════ GAME LOOP ══════════════════════════════
 function loop(ts){
-  if(!lastTime) lastTime=ts;
-  const dt=Math.min((ts-lastTime)/1000,0.05); lastTime=ts;
+  if(!lastTime)lastTime=ts;
+  const dt=Math.min((ts-lastTime)/1000,.05);lastTime=ts;
 
   if(state==='playing'){
-    elapsed+=dt; score+=pps()*dt;
+    elapsed+=dt;score+=pps()*dt;
     updateRat(dt);
 
-    // Second cat
     if(cats.length===1){
       if(elapsed>=CAT2_TIME-3&&elapsed<CAT2_TIME){cat2Warning=true;cat2WarnTimer=elapsed-(CAT2_TIME-3);}
       if(elapsed>=CAT2_TIME){
         cat2Warning=false;
-        const sx=rat.x<W/2?W-30:30, sy=rat.y<H/2?H-30:30;
-        cats.push({x:sx,y:sy,r:13,speed:1.6,angle:0,pathTimer:0,waypoints:[],id:2});
+        const sc=rat.x<W/2?24:1,sr=rat.y<H/2?19:1;
+        const sx=sc*TILE+TILE/2,sy=sr*TILE+TILE/2;
+        cats.push({x:sx,y:sy,r:12,cr:8,speed:1.6,angle:0,pathTimer:0,waypoints:[],id:2});
         burst(sx,sy,'#4070c0',22);
       }
     }
 
     for(const cat of cats){
-      cat.speed=(cat.id===1?1.4:1.6)+elapsed*0.010;
+      cat.speed=(cat.id===1?1.4:1.6)+elapsed*.010;
       updateCat(cat,dt);
     }
     tickParticles(dt);
 
-    // Cheese pickup
     if(cheese){
       cheese.pulse+=dt*3;
       if(dist(rat.x,rat.y,cheese.x,cheese.y)<18){
         score+=10+Math.floor(elapsed/5)*5;
         burst(cheese.x,cheese.y,'#f5c842',20);
-        cheese=null; cheeseTimer=4+Math.random()*8;
+        cheese=null;cheeseTimer=5+Math.random()*8;
       }
-    } else { cheeseTimer-=dt; if(cheeseTimer<=0)spawnCheese(); }
+    } else{cheeseTimer-=dt;if(cheeseTimer<=0)spawnCheese();}
 
-    // Death check
+    // Death: rat centre within combined visual radii
     for(const cat of cats){
-      if(dist(rat.x,rat.y,cat.x,cat.y)<rat.r+cat.r-5){
+      if(dist(rat.x,rat.y,cat.x,cat.y)<rat.r+cat.r-4){
         state='dead';
         burst(rat.x,rat.y,'#d4a96a',28);
         burst(cat.x,cat.y,cat.id===2?'#4070c0':'#e05252',18);
         const fs=Math.floor(score);
-        if(fs>highScore){
-          highScore=fs;
-          document.getElementById('bestDisplay').textContent=highScore;
-          saveScore(fs);
-        }
+        setTimeout(()=>showNameModal(fs),600);
         break;
       }
     }
+
     document.getElementById('scoreDisplay').textContent=Math.floor(score);
     document.getElementById('timeDisplay').textContent=Math.floor(elapsed)+'s';
   }
 
-  // Render
-  drawBg();
-  drawObstacles();
+  drawMaze();
   if(state!=='start'){
     drawDanger();
-    if(cheese) drawCheese();
+    if(cheese)drawCheese();
     for(const p of particles){ctx.save();ctx.globalAlpha=p.life;ctx.fillStyle=p.col;ctx.beginPath();ctx.arc(p.x,p.y,p.sz*p.life,0,Math.PI*2);ctx.fill();ctx.restore();}
-    drawRat(state==='dead'?0.4:1);
-    for(const cat of cats) drawCat(cat);
-    if(cat2Warning) drawCat2Warning();
+    drawRat(state==='dead'?.4:1);
+    for(const cat of cats)drawCat(cat);
+    if(cat2Warning)drawCat2Warning();
   }
-  if(state==='start') drawStartScreen();
-  if(state==='dead')  drawDeadScreen();
+  if(state==='start')drawStartScreen();
+  if(state==='dead')drawDeadScreen();
   requestAnimationFrame(loop);
 }
 
-// ═══════════════════════════════════════════
-// INPUT
-// ═══════════════════════════════════════════
-window.addEventListener('keydown',e=>{
-  keys[e.key]=true;
-  if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key))e.preventDefault();
-});
-window.addEventListener('keyup',e=>{keys[e.key]=false;});
-canvas.addEventListener('click',()=>{if(state!=='playing')initGame();});
-canvas.addEventListener('touchstart',e=>{e.preventDefault();if(state!=='playing')initGame();},{passive:false});
+// ═══════════════ PROFANITY FILTER ═══════════════════════
+const BLOCKED=['fuck','fuk','fvck','phuck','fuq','fck','shit','sh1t','sheit','shyt','ass','asshole','arsehole','bitch','biatch','bastard','cunt','cvnt','dick','dik','cock','c0ck','piss','prick','pussy','slut','whore','twat','wank','wanker','bollocks','arse','nigger','nigga','chink','spic','kike','gook','wetback','coon','jigaboo','sambo','redskin','raghead','towelhead','beaner','zipperhead','fag','fagg','faggot','dyke','tranny','retard','spaz','nazi','hitler','kkk'];
+function hasProfanity(s){
+  const n=s.toLowerCase().replace(/\s/g,'').replace(/0/g,'o').replace(/1/g,'i').replace(/3/g,'e').replace(/4/g,'a').replace(/5/g,'s').replace(/7/g,'t').replace(/@/g,'a').replace(/\$/g,'s').replace(/!/g,'i').replace(/[^a-z]/g,'');
+  return BLOCKED.some(w=>n.includes(w));
+}
 
-// Joystick
-(function(){
-  const base=document.getElementById('joystickBase');
-  const knob=document.getElementById('joystickKnob');
-  if(!base)return;
-  const DEAD=12, MAX=54;
-  let active=false;
-  function apply(cx,cy){
-    const rect=base.getBoundingClientRect();
-    const ox=cx-(rect.left+rect.width/2), oy=cy-(rect.top+rect.height/2);
-    const kx=Math.max(-MAX,Math.min(MAX,ox)), ky=Math.max(-MAX,Math.min(MAX,oy));
-    knob.style.transform=`translate(calc(-50% + ${kx}px),calc(-50% + ${ky}px))`;
-    keys['ArrowLeft']=ox<-DEAD; keys['ArrowRight']=ox>DEAD;
-    keys['ArrowUp']=oy<-DEAD;   keys['ArrowDown']=oy>DEAD;
+// ═══════════════ SCORE MODAL ════════════════════════════
+function showNameModal(finalScore){
+  pendingScore=finalScore;
+  document.getElementById('modalScore').textContent=finalScore+' pts';
+  document.getElementById('playerName').value='';
+  document.getElementById('nameModal').classList.add('visible');
+  setTimeout(()=>document.getElementById('playerName').focus(),50);
+}
+function hideNameModal(){document.getElementById('nameModal').classList.remove('visible');}
+
+async function submitScore(rawName){
+  const name=(rawName||'').trim();
+  if(!name){hideNameModal();await pushScore('RAT',pendingScore);return;}
+  if(hasProfanity(name)){
+    const inp=document.getElementById('playerName');
+    inp.value='';inp.placeholder='CHOOSE ANOTHER NAME';
+    inp.style.borderColor='#e05252';inp.style.color='#e05252';
+    setTimeout(()=>{inp.placeholder='YOUR NAME';inp.style.borderColor='';inp.style.color='';},2000);
+    return;
   }
-  function reset(){active=false;knob.style.transform='translate(-50%,-50%)';keys['ArrowLeft']=keys['ArrowRight']=keys['ArrowUp']=keys['ArrowDown']=false;}
-  base.addEventListener('touchstart',e=>{e.preventDefault();active=true;apply(e.touches[0].clientX,e.touches[0].clientY);if(state!=='playing')initGame();},{passive:false});
+  hideNameModal();
+  await pushScore(name.slice(0,16),pendingScore);
+}
+
+document.getElementById('playerName').addEventListener('keydown',e=>{
+  if(e.key==='Enter')submitScore(document.getElementById('playerName').value);
+  e.stopPropagation();
+});
+document.getElementById('nameModal').addEventListener('keydown',e=>e.stopPropagation());
+
+// ═══════════════ SUPABASE ═══════════════════════════════
+async function sbFetch(path,method='GET',body=null){
+  const h={'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':method==='POST'?'return=minimal':''};
+  const r=await fetch(`${SUPABASE_URL}/rest/v1/${path}`,{method,headers:h,body:body?JSON.stringify(body):null});
+  if(!r.ok)throw new Error(r.status);
+  return method==='GET'?r.json():r;
+}
+
+async function loadLeaderboard(){
+  if(!USING_SB){renderBoard(localScores);return;}
+  try{
+    const d=await sbFetch('high_scores?select=name,score&order=score.desc&limit=20');
+    renderBoard(d);setStatus('🟢 GLOBAL LEADERBOARD','connected');
+    if(d.length)document.getElementById('bestDisplay').textContent=d[0].score;
+  }catch(e){renderBoard(localScores);setStatus('⚠ OFFLINE','error');}
+}
+
+async function pushScore(name,scoreVal){
+  if(!USING_SB){
+    localScores.push({name,score:scoreVal});
+    localScores.sort((a,b)=>b.score-a.score);
+    if(localScores.length>20)localScores.length=20;
+    renderBoard(localScores,scoreVal);return;
+  }
+  try{await sbFetch('high_scores','POST',{name:name||'RAT',score:scoreVal});await loadLeaderboard();}
+  catch(e){setStatus('⚠ SAVE FAILED','error');}
+}
+
+async function incrementPlayCount(){
+  if(!USING_SB){
+    const el=document.getElementById('playCount');
+    el.textContent=((parseInt(el.textContent)||0)+1).toLocaleString();return;
+  }
+  try{await sbFetch('plays','POST',{played_at:new Date().toISOString()});}catch(e){}
+  try{
+    const r=await fetch(`${SUPABASE_URL}/rest/v1/plays?select=id`,{headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Prefer':'count=exact','Range':'0-0'}});
+    const range=r.headers.get('content-range');
+    if(range){const t=parseInt(range.split('/')[1]);if(!isNaN(t))document.getElementById('playCount').textContent=t.toLocaleString();}
+  }catch(e){}
+}
+
+function setStatus(msg,cls){const el=document.getElementById('sbStatus');el.textContent=msg;el.className='sb-status '+cls;}
+function renderBoard(entries,hl=null){
+  const el=document.getElementById('scoreList');
+  if(!entries?.length){el.innerHTML='<p class="no-scores">No scores yet.<br><br>Be the first!</p>';return;}
+  const medals=['gold','silver','bronze'],ranks=['1ST','2ND','3RD'];
+  const hi=hl!=null?entries.findIndex(x=>x.score===hl):-1;
+  el.innerHTML=entries.map((s,i)=>`<div class="score-entry${i===hi?' new-entry':''}"><span class="score-rank ${medals[i]||''}">${ranks[i]||`${i+1}TH`}</span><span class="score-name">${esc(s.name||'RAT')}</span><span class="score-val">${s.score}</span></div>`).join('');
+  if(!USING_SB)setStatus('📵 LOCAL MODE','');
+}
+const esc=s=>s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+// ═══════════════ INPUT ══════════════════════════════════
+window.addEventListener('keydown',e=>{keys[e.key]=true;if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key))e.preventDefault();});
+window.addEventListener('keyup',e=>{keys[e.key]=false;});
+
+function tryStart(){
+  if(state!=='playing'&&!document.getElementById('nameModal').classList.contains('visible'))initGame();
+}
+canvas.addEventListener('click',tryStart);
+canvas.addEventListener('touchstart',e=>{e.preventDefault();tryStart();},{passive:false});
+
+(function(){
+  const base=document.getElementById('joystickBase'),knob=document.getElementById('joystickKnob');
+  if(!base)return;
+  const DEAD=12,MAX=54;let active=false;
+  function apply(cx,cy){
+    const rect=base.getBoundingClientRect(),ox=cx-(rect.left+rect.width/2),oy=cy-(rect.top+rect.height/2);
+    const kx=Math.max(-MAX,Math.min(MAX,ox)),ky=Math.max(-MAX,Math.min(MAX,oy));
+    knob.style.transform=`translate(calc(-50% + ${kx}px),calc(-50% + ${ky}px))`;
+    keys['ArrowLeft']=ox<-DEAD;keys['ArrowRight']=ox>DEAD;keys['ArrowUp']=oy<-DEAD;keys['ArrowDown']=oy>DEAD;
+  }
+  function reset(){active=false;knob.style.transform='translate(-50%,-50%)';['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].forEach(k=>keys[k]=false);}
+  base.addEventListener('touchstart',e=>{e.preventDefault();active=true;apply(e.touches[0].clientX,e.touches[0].clientY);tryStart();},{passive:false});
   base.addEventListener('touchmove', e=>{e.preventDefault();if(active)apply(e.touches[0].clientX,e.touches[0].clientY);},{passive:false});
   base.addEventListener('touchend',  e=>{e.preventDefault();reset();},{passive:false});
   base.addEventListener('touchcancel',e=>{e.preventDefault();reset();},{passive:false});
 })();
 
-// ═══════════════════════════════════════════
-// START
-// ═══════════════════════════════════════════
+// ═══════════════ START ══════════════════════════════════
 loadLeaderboard();
 requestAnimationFrame(loop);
 </script>
