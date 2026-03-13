@@ -107,25 +107,13 @@ let localScores = [];
 // Every gap between an obstacle and a wall/edge is >= 50px
 // ═══════════════════════════════════════════
 const OBSTACLES = [
-  // Top row
-  {x:120, y:60,  w:80,  h:16},
-  {x:320, y:60,  w:80,  h:16},
-  // Left column
-  {x:60,  y:130, w:16,  h:80},
-  {x:60,  y:290, w:16,  h:80},
-  // Right column
-  {x:444, y:130, w:16,  h:80},
-  {x:444, y:290, w:16,  h:80},
-  // Middle horizontal bars
-  {x:160, y:180, w:100, h:16},
-  {x:260, y:180, w:100, h:16},
-  {x:160, y:280, w:100, h:16},
-  {x:260, y:280, w:100, h:16},
-  // Centre pillar
-  {x:242, y:195, w:36,  h:90},
-  // Bottom row
-  {x:120, y:360, w:80,  h:16},
-  {x:320, y:360, w:80,  h:16},
+  // 6 small square pillars — fully isolated, huge open space around each
+  {x:178, y:128, w:24, h:24},
+  {x:318, y:128, w:24, h:24},
+  {x:108, y:198, w:24, h:24},
+  {x:388, y:198, w:24, h:24},
+  {x:178, y:268, w:24, h:24},
+  {x:318, y:268, w:24, h:24},
 ];
 
 // ═══════════════════════════════════════════
@@ -282,12 +270,12 @@ function updateCat(cat, dt) {
   cat.pathTimer -= dt;
   if (cat.pathTimer <= 0 || !cat.waypoints.length) {
     cat.waypoints  = bfsPath(cat.x, cat.y, rat.x, rat.y);
-    cat.pathTimer  = dist(cat.x,cat.y,rat.x,rat.y) < 120 ? 0.1 : 0.25;
+    cat.pathTimer  = dist(cat.x,cat.y,rat.x,rat.y) < 150 ? 0.06 : 0.18;
   }
   const wp = cat.waypoints[0];
   if (!wp) return;
   const dx=wp.x-cat.x, dy=wp.y-cat.y, d=Math.hypot(dx,dy);
-  if (d < CELL * 0.6) { cat.waypoints.shift(); return; }
+  if (d < CELL * 1.2) { cat.waypoints.shift(); return; }
   const spd = cat.speed * dt * 60;
   slide(cat, (dx/d)*spd, (dy/d)*spd);
   cat.angle = Math.atan2(rat.y-cat.y, rat.x-cat.x);
@@ -404,11 +392,19 @@ function drawBg(){
 
 function drawObstacles(){
   for(const o of OBSTACLES){
-    ctx.fillStyle='#1a1c2e';ctx.fillRect(o.x,o.y,o.w,o.h);
-    ctx.strokeStyle='#2a3060';ctx.lineWidth=1;ctx.strokeRect(o.x+1,o.y+1,o.w-2,o.h-2);
-    ctx.strokeStyle='#1e2248';
-    if(o.w>30){ctx.beginPath();ctx.moveTo(o.x+o.w/2,o.y);ctx.lineTo(o.x+o.w/2,o.y+o.h);ctx.stroke();}
-    if(o.h>30){ctx.beginPath();ctx.moveTo(o.x,o.y+o.h/2);ctx.lineTo(o.x+o.w,o.y+o.h/2);ctx.stroke();}
+    const cx=o.x+o.w/2, cy=o.y+o.h/2, rx=o.w/2, ry=o.h/2;
+    // Shadow
+    ctx.save();
+    ctx.shadowColor='#000';ctx.shadowBlur=8;
+    ctx.fillStyle='#1a1c2e';
+    ctx.beginPath();ctx.ellipse(cx,cy,rx,ry,0,0,Math.PI*2);ctx.fill();
+    ctx.restore();
+    // Border
+    ctx.strokeStyle='#2a3060';ctx.lineWidth=2;
+    ctx.beginPath();ctx.ellipse(cx,cy,rx,ry,0,0,Math.PI*2);ctx.stroke();
+    // Inner highlight
+    ctx.strokeStyle='#3a4080';ctx.lineWidth=1;
+    ctx.beginPath();ctx.ellipse(cx-1,cy-1,rx-3,ry-3,0,0,Math.PI*2);ctx.stroke();
   }
 }
 
@@ -444,7 +440,10 @@ function drawRat(alpha){
 }
 
 function drawCat(cat){
-  ctx.save();ctx.translate(cat.x,cat.y);ctx.rotate(cat.angle);
+  ctx.save();ctx.translate(cat.x,cat.y);
+  const goLeft = Math.cos(cat.angle) < -0.1;
+  if(goLeft){ ctx.scale(-1,1); ctx.rotate(Math.PI - cat.angle); }
+  else       { ctx.rotate(cat.angle); }
   const two=cat.id===2;
   const [bC,hC,eC,sC,iC,nC]=two
     ?['#305090','#4070c0','#f0d020','#203570','#8090d0','#a0b8f0']
