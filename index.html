@@ -43,19 +43,19 @@
   .play-counter span { color: var(--accent); }
 
   /* ── Scoreboard ── */
-  .scoreboard { background:var(--panel); border:2px solid var(--border); padding:20px 16px; width:220px; min-height:340px; }
-  .scoreboard h2 { font-size:9px; color:var(--accent); text-align:center; margin-bottom:16px; letter-spacing:2px; border-bottom:1px solid var(--border); padding-bottom:12px; }
-  .score-entry { display:flex; justify-content:space-between; align-items:center; padding:7px 4px; border-bottom:1px solid #1a1a28; font-size:6px; animation:fadeIn 0.3s ease; }
+  .scoreboard { background:var(--panel); border:2px solid var(--border); padding:20px 16px; width:260px; min-height:400px; }
+  .scoreboard h2 { font-size:10px; color:var(--accent); text-align:center; margin-bottom:16px; letter-spacing:2px; border-bottom:1px solid var(--border); padding-bottom:12px; }
+  .score-entry { display:flex; justify-content:space-between; align-items:center; padding:7px 4px; border-bottom:1px solid #1a1a28; font-size:8px; animation:fadeIn 0.3s ease; }
   @keyframes fadeIn { from{opacity:0;transform:translateX(-8px)} to{opacity:1;transform:translateX(0)} }
   .score-rank { color:var(--dim); width:24px; flex-shrink:0; }
   .score-rank.gold { color:#f5c842; }
   .score-rank.silver { color:#aab0c0; }
   .score-rank.bronze { color:#cd7f32; }
-  .score-name { color:var(--text); flex:1; margin:0 6px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:90px; }
+  .score-name { color:var(--text); flex:1; margin:0 6px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:120px; }
   .score-val { color:var(--green); flex-shrink:0; }
   .score-entry.new-entry { background:#1a2a1a; border-color:#2a4a2a; }
-  .no-scores { color:var(--dim); font-size:6px; text-align:center; margin-top:20px; line-height:2.2; }
-  .sb-status { font-size:5px; color:var(--dim); text-align:center; margin-top:8px; }
+  .no-scores { color:var(--dim); font-size:7px; text-align:center; margin-top:20px; line-height:2.2; }
+  .sb-status { font-size:6px; color:var(--dim); text-align:center; margin-top:8px; }
   .sb-status.connected { color:#4ade8088; }
   .sb-status.error { color:#e0525288; }
 
@@ -212,7 +212,7 @@ async function sbFetch(path, method = 'GET', body = null) {
 async function loadLeaderboard() {
   if (!USING_SUPABASE) { renderScoreboard(localScores); return; }
   try {
-    const data = await sbFetch('high_scores?select=name,score&order=score.desc&limit=10');
+    const data = await sbFetch('high_scores?select=name,score&order=score.desc&limit=20');
     renderScoreboard(data);
     setStatus('🟢 GLOBAL LEADERBOARD', 'connected');
     // Update local best
