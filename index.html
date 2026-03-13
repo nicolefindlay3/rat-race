@@ -103,25 +103,25 @@ const CAT2_TIME=30;
 
 const MAZE=[
   '##########################',  //  0
-  '#  ####  #      #  ####  #',  //  1
-  '#  ####  #      #  ####  #',  //  2
-  '#        #      #        #',  //  3
-  '#  ####  ##    ##  ####  #',  //  4
+  '#                        #',  //  1
+  '#  ######  ##  ######    #',  //  2
+  '#  ######  ##  ######    #',  //  3
+  '#                        #',  //  4
   '#                        #',  //  5
-  '#  ####  #      #  ####  #',  //  6
-  '#  ####  #      #  ####  #',  //  7
-  '#        #      #        #',  //  8
-  '####  #####    #####  ####',  //  9
-  '#                        #',  // 10  ← rat spawns here (col 13)
-  '####  #####    #####  ####',  // 11
-  '#        #      #        #',  // 12
-  '#  ####  #      #  ####  #',  // 13
-  '#  ####  #      #  ####  #',  // 14
-  '#                        #',  // 15
-  '#  ####  ##    ##  ####  #',  // 16
-  '#        #      #        #',  // 17
-  '#  ####  #      #  ####  #',  // 18
-  '#  ####  #      #  ####  #',  // 19
+  '#  ##  ##########  ##    #',  //  6
+  '#  ##  ##########  ##    #',  //  7
+  '#                        #',  //  8
+  '#                        #',  //  9
+  '#  ######  ##  ######    #',  // 10  ← rat spawns here (col 13)
+  '#  ######  ##  ######    #',  // 11
+  '#                        #',  // 12
+  '#                        #',  // 13
+  '#  ##  ##########  ##    #',  // 14
+  '#  ##  ##########  ##    #',  // 15
+  '#                        #',  // 16
+  '#                        #',  // 17
+  '#  ######  ##  ######    #',  // 18
+  '#  ######  ##  ######    #',  // 19
   '##########################',  // 20
 ];
 
@@ -189,7 +189,7 @@ let state='start';
 let rat,cats,score,elapsed,lastTime;
 let keys={};
 let particles=[];
-let cheese=null,cheeseTimer=0;
+let cheeses=[],cheeseTimer=0;
 let cat2Warning=false,cat2WarnTimer=0;
 let pendingScore=0,localScores=[];
 
@@ -197,11 +197,16 @@ function initGame(){
   rat={x:13*TILE+TILE/2,y:10*TILE+TILE/2,r:10,cr:8,speed:2.6,dx:0,dy:0,tail:[]};
   cats=[{x:TILE+TILE/2,y:TILE+TILE/2,r:12,cr:8,speed:1.4,angle:0,pathTimer:0,waypoints:[],id:1}];
   score=0;elapsed=0;lastTime=null;
-  particles=[];cheese=null;cheeseTimer=2;
+  particles=[];cheeses=[];cheeseTimer=1;
   cat2Warning=false;cat2WarnTimer=0;
   state='playing';
   spawnCheese();
   incrementPlayCount();
+}
+
+function maxCheese(){
+  // More cheese the longer you survive: starts at 1, +1 every 20s, cap 5
+  return Math.min(5, 1 + Math.floor(elapsed/20));
 }
 
 function spawnCheese(){
@@ -211,7 +216,11 @@ function spawnCheese(){
     if(isWall(col,row))continue;
     const cx=col*TILE+TILE/2,cy=row*TILE+TILE/2;
     if(dist(cx,cy,rat.x,rat.y)<60)continue;
-    if(cats.every(c=>dist(cx,cy,c.x,c.y)>50)){cheese={x:cx,y:cy,pulse:0};return;}
+    if(cats.every(c=>dist(cx,cy,c.x,c.y)>50) &&
+       cheeses.every(ch=>dist(cx,cy,ch.x,ch.y)>60)){
+      cheeses.push({x:cx,y:cy,pulse:Math.random()*Math.PI*2});
+      return;
+    }
   }
 }
 
@@ -347,7 +356,7 @@ function drawCat(cat){
   ctx.restore();
 }
 
-function drawCheese(){
+function drawCheese(cheese){
   ctx.save();ctx.translate(cheese.x,cheese.y);
   const sc=1+Math.sin(cheese.pulse)*.1;ctx.scale(sc,sc);
   ctx.shadowColor='#f5c842';ctx.shadowBlur=16;
@@ -427,14 +436,23 @@ function loop(ts){
     }
     tickParticles(dt);
 
-    if(cheese){
-      cheese.pulse+=dt*3;
-      if(dist(rat.x,rat.y,cheese.x,cheese.y)<18){
+    // Animate and check pickups
+    for(let i=cheeses.length-1;i>=0;i--){
+      cheeses[i].pulse+=dt*3;
+      if(dist(rat.x,rat.y,cheeses[i].x,cheeses[i].y)<18){
         score+=10+Math.floor(elapsed/5)*5;
-        burst(cheese.x,cheese.y,'#f5c842',20);
-        cheese=null;cheeseTimer=5+Math.random()*8;
+        burst(cheeses[i].x,cheeses[i].y,'#f5c842',20);
+        cheeses.splice(i,1);
       }
-    } else{cheeseTimer-=dt;if(cheeseTimer<=0)spawnCheese();}
+    }
+    // Top up cheeses toward the current max
+    cheeseTimer-=dt;
+    if(cheeseTimer<=0){
+      const needed=maxCheese()-cheeses.length;
+      if(needed>0) spawnCheese();
+      // Shorter respawn delay as game progresses
+      cheeseTimer=Math.max(1.5, 4-elapsed*0.03);
+    }
 
     // Death: rat centre within combined visual radii
     for(const cat of cats){
@@ -455,7 +473,7 @@ function loop(ts){
   drawMaze();
   if(state!=='start'){
     drawDanger();
-    if(cheese)drawCheese();
+    for(const ch of cheeses)drawCheese(ch);
     for(const p of particles){ctx.save();ctx.globalAlpha=p.life;ctx.fillStyle=p.col;ctx.beginPath();ctx.arc(p.x,p.y,p.sz*p.life,0,Math.PI*2);ctx.fill();ctx.restore();}
     drawRat(state==='dead'?.4:1);
     for(const cat of cats)drawCat(cat);
