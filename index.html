@@ -299,7 +299,7 @@ function generateObstacles() {
 
 function buildNavGrid() {
   navGrid = [];
-  const PAD = 10; // clearance from walls for cats
+  const PAD = 15; // must be >= cat radius (13) to prevent navigating into impassable spots
   for (let row = 0; row < ROWS; row++) {
     for (let col = 0; col < COLS; col++) {
       const cx = col * CELL + CELL / 2;
@@ -324,61 +324,73 @@ function cellCenter(col, row) {
   return { x: col * CELL + CELL / 2, y: row * CELL + CELL / 2 };
 }
 
-// BFS from start cell to goal cell — returns next step direction, or null
-function bfsNextStep(sx, sy, gx, gy) {
+// BFS — returns ordered list of world-space waypoints from start to goal
+function bfsPath(sx, sy, gx, gy) {
+  const clampCol = c => Math.max(0, Math.min(COLS-1, c));
+  const clampRow = r => Math.max(0, Math.min(ROWS-1, r));
   const sc = worldToCell(sx, sy);
   const gc = worldToCell(gx, gy);
-  sc.col = Math.max(0, Math.min(COLS-1, sc.col));
-  sc.row = Math.max(0, Math.min(ROWS-1, sc.row));
-  gc.col = Math.max(0, Math.min(COLS-1, gc.col));
-  gc.row = Math.max(0, Math.min(ROWS-1, gc.row));
+  sc.col = clampCol(sc.col); sc.row = clampRow(sc.row);
+  gc.col = clampCol(gc.col); gc.row = clampRow(gc.row);
 
-  if (sc.col === gc.col && sc.row === gc.row) return { dx: gx - sx, dy: gy - sy };
+  // Snap goal to nearest walkable cell if it's blocked
+  if (!navGrid[gc.row * COLS + gc.col]) {
+    let best = null, bestD = Infinity;
+    for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+      if (!navGrid[r * COLS + c]) continue;
+      const d = Math.hypot(c - gc.col, r - gc.row);
+      if (d < bestD) { bestD = d; best = {col:c, row:r}; }
+    }
+    if (best) { gc.col = best.col; gc.row = best.row; }
+  }
+
+  // Snap start to nearest walkable cell if needed
+  if (!navGrid[sc.row * COLS + sc.col]) {
+    let best = null, bestD = Infinity;
+    for (let r = Math.max(0,sc.row-3); r <= Math.min(ROWS-1,sc.row+3); r++)
+    for (let c = Math.max(0,sc.col-3); c <= Math.min(COLS-1,sc.col+3); c++) {
+      if (!navGrid[r * COLS + c]) continue;
+      const d = Math.hypot(c - sc.col, r - sc.row);
+      if (d < bestD) { bestD = d; best = {col:c, row:r}; }
+    }
+    if (best) { sc.col = best.col; sc.row = best.row; }
+  }
+
+  if (sc.col === gc.col && sc.row === gc.row) return [cellCenter(gc.col, gc.row)];
 
   const key = (c, r) => r * COLS + c;
   const visited = new Uint8Array(COLS * ROWS);
   const parent  = new Int32Array(COLS * ROWS).fill(-1);
   const queue   = [key(sc.col, sc.row)];
   visited[key(sc.col, sc.row)] = 1;
-  const dirs = [[0,-1],[0,1],[-1,0],[1,0],[-1,-1],[1,-1],[-1,1],[1,1]];
+  const dirs = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,1],[1,-1],[-1,-1]];
 
   let found = false;
-  while (queue.length) {
+  outer: while (queue.length) {
     const cur = queue.shift();
     const cc = cur % COLS, cr = Math.floor(cur / COLS);
     if (cc === gc.col && cr === gc.row) { found = true; break; }
     for (const [dc, dr] of dirs) {
-      const nc = cc + dc, nr = cr + dr;
-      if (nc < 0 || nr < 0 || nc >= COLS || nr >= ROWS) continue;
+      const nc = cc+dc, nr = cr+dr;
+      if (nc<0||nr<0||nc>=COLS||nr>=ROWS) continue;
       const nk = key(nc, nr);
       if (visited[nk] || !navGrid[nk]) continue;
-      // For diagonals check both axis neighbors are clear
-      if (dc !== 0 && dr !== 0) {
-        if (!navGrid[key(cc + dc, cr)] || !navGrid[key(cc, cr + dr)]) continue;
-      }
-      visited[nk] = 1;
-      parent[nk] = cur;
-      queue.push(nk);
+      if (dc!==0 && dr!==0 && (!navGrid[key(cc+dc,cr)] || !navGrid[key(cc,cr+dr)])) continue;
+      visited[nk] = 1; parent[nk] = key(cc, cr); queue.push(nk);
     }
   }
 
-  if (!found) {
-    // No path — head directly toward goal
-    const dx = gx - sx, dy = gy - sy, d = Math.hypot(dx, dy) || 1;
-    return { dx: dx/d, dy: dy/d };
-  }
+  if (!found) return null;
 
-  // Trace back to find first step after start
+  // Reconstruct path as world-space waypoints
+  const path = [];
   let cur = key(gc.col, gc.row);
-  let prev = cur;
-  while (parent[cur] !== key(sc.col, sc.row) && parent[cur] !== -1) {
-    prev = cur; cur = parent[cur];
+  const startKey = key(sc.col, sc.row);
+  while (cur !== startKey && parent[cur] !== -1) {
+    path.unshift(cellCenter(cur % COLS, Math.floor(cur / COLS)));
+    cur = parent[cur];
   }
-  // cur is now the first step from start
-  const fc = cur % COLS, fr = Math.floor(cur / COLS);
-  const target = cellCenter(fc, fr);
-  const dx = target.x - sx, dy = target.y - sy, d = Math.hypot(dx, dy) || 1;
-  return { dx: dx/d, dy: dy/d };
+  return path.length ? path : [cellCenter(gc.col, gc.row)];
 }
 
 // ─── COLLISION ────────────────────────────────────────────────────
@@ -413,7 +425,7 @@ function moveWithSlide(e, dx, dy) {
 // ─── INIT ─────────────────────────────────────────────────────────
 function initGame() {
   rat = {x:W/2, y:H/2, r:10, speed:2.4, dx:0, dy:0, tail:[]};
-  cats = [{x:30, y:30, r:13, speed:1.9, angle:0, pathTimer:0, id:1}];
+  cats = [{x:30, y:30, r:13, speed:1.9, angle:0, pathTimer:0, waypoints:[], id:1}];
   score=0; elapsed=0; lastTime=null;
   particles=[]; cheese=null; cheeseTimer=0;
   cat2Warning=false; cat2WarnTimer=0;
@@ -431,20 +443,38 @@ function spawnCheese() {
   }
 }
 
-// ─── CAT AI (BFS pathfinding — never gets stuck) ─────────────────
+// ─── CAT AI (waypoint-following BFS — truly unstuckable) ─────────
 function updateCat(cat, dt) {
-  // Recalculate BFS path direction periodically
   cat.pathTimer -= dt;
-  if (cat.pathTimer <= 0) {
-    const step = bfsNextStep(cat.x, cat.y, rat.x, rat.y);
-    cat.moveX = step.dx;
-    cat.moveY = step.dy;
-    // Refresh path more often when close to rat
+
+  // Recompute full path periodically
+  if (cat.pathTimer <= 0 || !cat.waypoints || cat.waypoints.length === 0) {
+    cat.waypoints = bfsPath(cat.x, cat.y, rat.x, rat.y);
     const d = dist(cat.x, cat.y, rat.x, rat.y);
-    cat.pathTimer = d < 100 ? 0.05 : 0.12;
+    cat.pathTimer = d < 120 ? 0.08 : 0.2;
   }
+
+  if (!cat.waypoints || cat.waypoints.length === 0) {
+    // Absolute fallback: walk directly at rat
+    const dx = rat.x - cat.x, dy = rat.y - cat.y, d = Math.hypot(dx,dy)||1;
+    moveWithSlide(cat, (dx/d)*cat.speed*dt*60, (dy/d)*cat.speed*dt*60);
+    cat.angle = Math.atan2(rat.y-cat.y, rat.x-cat.x);
+    return;
+  }
+
+  // Walk toward current waypoint
+  const wp = cat.waypoints[0];
+  const dx = wp.x - cat.x, dy = wp.y - cat.y;
+  const d  = Math.hypot(dx, dy);
+
+  // Advance to next waypoint when close enough
+  if (d < cat.speed * 1.5) {
+    cat.waypoints.shift();
+    return;
+  }
+
   const spd = cat.speed * dt * 60;
-  moveWithSlide(cat, cat.moveX * spd, cat.moveY * spd);
+  moveWithSlide(cat, (dx/d)*spd, (dy/d)*spd);
   cat.angle = Math.atan2(rat.y - cat.y, rat.x - cat.x);
 }
 
@@ -487,9 +517,23 @@ function drawObstacle(o){
 }
 
 function drawRat(alpha){
-  ctx.save();ctx.globalAlpha=alpha;ctx.translate(rat.x,rat.y);
-  const angle=(rat.dx||rat.dy)?Math.atan2(rat.dy,rat.dx):0;ctx.rotate(angle);
-  if(rat.tail.length>1){ctx.save();ctx.rotate(-angle);ctx.translate(-rat.x,-rat.y);ctx.strokeStyle='#a07848';ctx.lineCap='round';ctx.beginPath();ctx.moveTo(rat.tail[0].x,rat.tail[0].y);for(let i=1;i<rat.tail.length;i++){ctx.lineWidth=Math.max(0.5,2.2-i*0.16);ctx.lineTo(rat.tail[i].x,rat.tail[i].y);}ctx.stroke();ctx.restore();}
+  ctx.save();ctx.globalAlpha=alpha;
+
+  // Draw tail in world space first (unaffected by sprite flip)
+  if(rat.tail.length>1){
+    ctx.strokeStyle='#a07848';ctx.lineCap='round';
+    ctx.beginPath();ctx.moveTo(rat.tail[0].x,rat.tail[0].y);
+    for(let i=1;i<rat.tail.length;i++){ctx.lineWidth=Math.max(0.5,2.2-i*0.16);ctx.lineTo(rat.tail[i].x,rat.tail[i].y);}
+    ctx.stroke();
+  }
+
+  ctx.translate(rat.x,rat.y);
+  const goingLeft = rat.dx < -0.1;
+  const angle = (rat.dx||rat.dy) ? Math.atan2(rat.dy, Math.abs(rat.dx)) * (goingLeft ? 1 : 1) : 0;
+  // Flip horizontally when going left so rat never goes upside-down
+  if(goingLeft){ ctx.scale(-1,1); ctx.rotate(Math.atan2(rat.dy,-rat.dx)); }
+  else { ctx.rotate(Math.atan2(rat.dy,rat.dx)); }
+
   ctx.fillStyle='#c49a5a';ctx.beginPath();ctx.ellipse(0,0,11,8,0,0,Math.PI*2);ctx.fill();
   ctx.fillStyle='#d4a96a';ctx.beginPath();ctx.ellipse(10,0,8,6,0,0,Math.PI*2);ctx.fill();
   ctx.fillStyle='#e8b88a';ctx.beginPath();ctx.ellipse(8,-6,4,3,-0.5,0,Math.PI*2);ctx.fill();
@@ -598,7 +642,7 @@ function loop(ts){
       if(elapsed>=CAT2_TIME){
         cat2Warning=false;
         const sx=rat.x<W/2?W-30:30,sy=rat.y<H/2?H-30:30;
-        cats.push({x:sx,y:sy,r:13,speed:2.1,angle:0,pathTimer:0,moveX:0,moveY:-1,id:2});
+        cats.push({x:sx,y:sy,r:13,speed:2.1,angle:0,pathTimer:0,waypoints:[],id:2});
         spawnParticles(sx,sy,'#4070c0',22);
       }
     }
