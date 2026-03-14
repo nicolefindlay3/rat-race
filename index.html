@@ -93,6 +93,70 @@ const SUPABASE_URL='https://pygotatlaefnpdfophek.supabase.co';
 const SUPABASE_KEY='sb_publishable_unLtgtg-joS2NuAcC1uQcg_zovy_RIq';
 const USING_SB=SUPABASE_URL!=='YOUR_SUPABASE_URL';
 
+// ═══════════════ AUDIO ══════════════════════════════════
+const AudioCtx=window.AudioContext||window.webkitAudioContext;
+let audioCtx=null, heartbeatInterval=null, lastBpm=0;
+
+function getAudioCtx(){
+  if(!audioCtx) audioCtx=new AudioCtx();
+  if(audioCtx.state==='suspended') audioCtx.resume();
+  return audioCtx;
+}
+
+// Single heartbeat thud: low kick + short decay
+function playBeat(){
+  if(state!=='playing') return;
+  try{
+    const ac=getAudioCtx();
+    const now=ac.currentTime;
+
+    // Low kick oscillator
+    const osc=ac.createOscillator();
+    const gain=ac.createGain();
+    osc.connect(gain); gain.connect(ac.destination);
+    osc.type='sine';
+    osc.frequency.setValueAtTime(120,now);
+    osc.frequency.exponentialRampToValueAtTime(40,now+0.12);
+    gain.gain.setValueAtTime(0.45,now);
+    gain.gain.exponentialRampToValueAtTime(0.001,now+0.18);
+    osc.start(now); osc.stop(now+0.2);
+
+    // Soft click transient
+    const osc2=ac.createOscillator();
+    const gain2=ac.createGain();
+    osc2.connect(gain2); gain2.connect(ac.destination);
+    osc2.type='triangle';
+    osc2.frequency.setValueAtTime(600,now);
+    gain2.gain.setValueAtTime(0.15,now);
+    gain2.gain.exponentialRampToValueAtTime(0.001,now+0.04);
+    osc2.start(now); osc2.stop(now+0.05);
+  }catch(e){}
+}
+
+function catSpeed(){
+  // Average speed of all cats
+  if(!cats||!cats.length) return 1.4;
+  return cats.reduce((s,c)=>s+c.speed,0)/cats.length;
+}
+
+function updateHeartbeat(){
+  if(state!=='playing'){ stopHeartbeat(); return; }
+  // BPM: 60 at base speed 1.4, up to 160 at speed ~3.0
+  const spd=catSpeed();
+  const bpm=Math.round(60+((spd-1.4)/1.6)*100);
+  const clampedBpm=Math.max(50,Math.min(160,bpm));
+  if(Math.abs(clampedBpm-lastBpm)>2){
+    lastBpm=clampedBpm;
+    clearInterval(heartbeatInterval);
+    heartbeatInterval=setInterval(playBeat,60000/clampedBpm);
+  }
+}
+
+function stopHeartbeat(){
+  clearInterval(heartbeatInterval);
+  heartbeatInterval=null; lastBpm=0;
+}
+
 // ═══════════════ MAZE ═══════════════════════════════════
 // 26 cols × 21 rows = 520 × 420 px. '#'=wall, ' '=floor.
 // Every corridor is 1 tile wide (20px). Entities use r=8
@@ -200,6 +264,7 @@ function initGame(){
   particles=[];cheeses=[];cheeseTimer=1;
   cat2Warning=false;cat2WarnTimer=0;
   state='playing';
+  stopHeartbeat();
   spawnCheese();
   incrementPlayCount();
 }
@@ -431,10 +496,11 @@ function loop(ts){
     }
 
     for(const cat of cats){
-      cat.speed=(cat.id===1?1.4:1.6)+elapsed*.010;
+      cat.speed=(cat.id===1?1.4:1.6)+Math.floor(score)*0.0008;
       updateCat(cat,dt);
     }
     tickParticles(dt);
+    updateHeartbeat();
 
     // Animate and check pickups
     for(let i=cheeses.length-1;i>=0;i--){
@@ -460,6 +526,7 @@ function loop(ts){
         state='dead';
         burst(rat.x,rat.y,'#d4a96a',28);
         burst(cat.x,cat.y,cat.id===2?'#4070c0':'#e05252',18);
+        stopHeartbeat();
         const fs=Math.floor(score);
         setTimeout(()=>showNameModal(fs),600);
         break;
@@ -578,6 +645,7 @@ window.addEventListener('keydown',e=>{keys[e.key]=true;if(['ArrowUp','ArrowDown'
 window.addEventListener('keyup',e=>{keys[e.key]=false;});
 
 function tryStart(){
+  try{getAudioCtx();}catch(e){} // unlock audio on first gesture — never block game start
   if(state!=='playing'&&!document.getElementById('nameModal').classList.contains('visible'))initGame();
 }
 canvas.addEventListener('click',tryStart);
