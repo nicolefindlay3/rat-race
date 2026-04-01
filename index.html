@@ -49,6 +49,12 @@ h1{font-size:22px;color:var(--accent);text-shadow:0 0 20px #f5c84288,3px 3px 0 #
 @media(pointer:coarse){#joystickWrap{display:flex;}}
 #joystickBase{width:140px;height:140px;border-radius:50%;background:#1a1c2e;border:2px solid #2a3060;position:relative;touch-action:none;}
 #joystickKnob{width:56px;height:56px;border-radius:50%;background:var(--accent);position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;}
+/* Colour picker */
+.colour-picker{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center;}
+.colour-picker label{font-size:6px;color:var(--dim);letter-spacing:1px;}
+.colour-swatch{width:28px;height:28px;border-radius:50%;border:2px solid #333;cursor:pointer;transition:transform .15s,border-color .15s;}
+.colour-swatch:hover{transform:scale(1.2);}
+.colour-swatch.selected{border-color:#fff;transform:scale(1.25);}
 </style>
 </head>
 <body>
@@ -78,6 +84,17 @@ h1{font-size:22px;color:var(--accent);text-shadow:0 0 20px #f5c84288,3px 3px 0 #
     <canvas id="gameCanvas" width="520" height="420"></canvas>
     <div class="hint">ARROW KEYS TO MOVE &nbsp;|&nbsp; CLICK TO START</div>
     <div class="play-counter">🎮 PLAYED <span id="playCount">—</span> TIMES</div>
+    <div class="colour-picker">
+      <span class="colour-label" style="font-size:6px;color:var(--dim);letter-spacing:1px;font-family:'Press Start 2P',monospace;">RAT COLOUR:</span>
+      <div class="colour-swatch selected" id="sw0" style="background:#c49a5a;" onclick="setRatColour(0)" title="Sandy"></div>
+      <div class="colour-swatch" id="sw1" style="background:#e05252;" onclick="setRatColour(1)" title="Red"></div>
+      <div class="colour-swatch" id="sw2" style="background:#4ade80;" onclick="setRatColour(2)" title="Green"></div>
+      <div class="colour-swatch" id="sw3" style="background:#60a0f0;" onclick="setRatColour(3)" title="Blue"></div>
+      <div class="colour-swatch" id="sw4" style="background:#c060e0;" onclick="setRatColour(4)" title="Purple"></div>
+      <div class="colour-swatch" id="sw5" style="background:#f08030;" onclick="setRatColour(5)" title="Orange"></div>
+      <div class="colour-swatch" id="sw6" style="background:#f0f0f0;" onclick="setRatColour(6)" title="White"></div>
+      <div class="colour-swatch" id="sw7" style="background:#111111;border-color:#555;" onclick="setRatColour(7)" title="Black"></div>
+    </div>
     <div id="joystickWrap"><div id="joystickBase"><div id="joystickKnob"></div></div></div>
   </div>
   <div class="scoreboard">
@@ -155,6 +172,25 @@ function updateHeartbeat(){
 function stopHeartbeat(){
   clearInterval(heartbeatInterval);
   heartbeatInterval=null; lastBpm=0;
+}
+
+// ═══════════════ RAT COLOURS ════════════════════════════
+// Each entry: [body, head, earOuter, earInner, tailCol, whiskerCol]
+const RAT_PALETTES=[
+  ['#c49a5a','#d4a96a','#e8b88a','#c4856a','#a07848','#e8d0a8'],  // 0 Sandy (default)
+  ['#c03030','#e04040','#f07070','#a02020','#802020','#f0a0a0'],  // 1 Red
+  ['#2a9a50','#3aba60','#70da90','#1a7a40','#156030','#a0f0b0'],  // 2 Green
+  ['#3060c0','#4080e0','#80b0f8','#2040a0','#183080','#b0d0ff'],  // 3 Blue
+  ['#9030b0','#b050d0','#d080f0','#7020a0','#501080','#e0b0ff'],  // 4 Purple
+  ['#c05010','#e07020','#f0a060','#a04010','#803010','#ffc090'],  // 5 Orange
+  ['#c0c0c0','#e0e0e0','#f8f8f8','#a0a0a0','#808080','#ffffff'],  // 6 White
+  ['#222222','#333333','#555555','#111111','#1a1a1a','#666666'],  // 7 Black
+];
+let ratPalette=0;
+
+function setRatColour(idx){
+  ratPalette=idx;
+  document.querySelectorAll('.colour-swatch').forEach((el,i)=>el.classList.toggle('selected',i===idx));
 }
 
 // ═══════════════ MAZE ═══════════════════════════════════
@@ -371,9 +407,10 @@ function drawMaze(){
 }
 
 function drawRat(alpha){
+  const[bodyCol,headCol,earCol,earInCol,tailCol,whiskCol]=RAT_PALETTES[ratPalette];
   ctx.save();ctx.globalAlpha=alpha;
   if(rat.tail.length>1){
-    ctx.strokeStyle='#a07848';ctx.lineCap='round';
+    ctx.strokeStyle=tailCol;ctx.lineCap='round';
     ctx.beginPath();ctx.moveTo(rat.tail[0].x,rat.tail[0].y);
     for(let i=1;i<rat.tail.length;i++){ctx.lineWidth=Math.max(.5,2.2-i*.15);ctx.lineTo(rat.tail[i].x,rat.tail[i].y);}
     ctx.stroke();
@@ -382,14 +419,14 @@ function drawRat(alpha){
   const goLeft=rat.dx<-0.1;
   if(goLeft){ctx.scale(-1,1);ctx.rotate(Math.atan2(rat.dy,-rat.dx));}
   else ctx.rotate(Math.atan2(rat.dy,rat.dx));
-  ctx.fillStyle='#c49a5a';ctx.beginPath();ctx.ellipse(0,0,11,8,0,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle='#d4a96a';ctx.beginPath();ctx.ellipse(10,0,8,6,0,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle='#e8b88a';ctx.beginPath();ctx.ellipse(8,-6,4,3,-.5,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle='#c4856a';ctx.beginPath();ctx.ellipse(8,-6,2,1.5,-.5,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle=bodyCol;ctx.beginPath();ctx.ellipse(0,0,11,8,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle=headCol;ctx.beginPath();ctx.ellipse(10,0,8,6,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle=earCol;ctx.beginPath();ctx.ellipse(8,-6,4,3,-.5,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle=earInCol;ctx.beginPath();ctx.ellipse(8,-6,2,1.5,-.5,0,Math.PI*2);ctx.fill();
   ctx.fillStyle='#111';ctx.beginPath();ctx.arc(15,-2,2,0,Math.PI*2);ctx.fill();
   ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(15.5,-2.5,.7,0,Math.PI*2);ctx.fill();
   ctx.fillStyle='#e87090';ctx.beginPath();ctx.arc(18,0,1.5,0,Math.PI*2);ctx.fill();
-  ctx.strokeStyle='#e8d0a8';ctx.lineWidth=.7;
+  ctx.strokeStyle=whiskCol;ctx.lineWidth=.7;
   for(const s of[-1,1]){ctx.beginPath();ctx.moveTo(16,s*2);ctx.lineTo(22,s*4);ctx.stroke();ctx.beginPath();ctx.moveTo(16,s);ctx.lineTo(22,s);ctx.stroke();}
   ctx.restore();
 }
