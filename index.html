@@ -49,6 +49,10 @@ h1{font-size:22px;color:var(--accent);text-shadow:0 0 20px #f5c84288,3px 3px 0 #
 @media(pointer:coarse){#joystickWrap{display:flex;}}
 #joystickBase{width:140px;height:140px;border-radius:50%;background:#1a1c2e;border:2px solid #2a3060;position:relative;touch-action:none;}
 #joystickKnob{width:56px;height:56px;border-radius:50%;background:var(--accent);position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;}
+/* Level buttons */
+.level-btn{font-family:"Press Start 2P",monospace;font-size:7px;padding:6px 10px;cursor:pointer;border:2px solid var(--border);background:var(--panel);color:var(--dim);min-width:36px;text-align:center;transition:all .15s;}
+.level-btn:hover{border-color:var(--accent);color:var(--accent);}
+.level-btn.active{border-color:var(--accent);background:#2a2010;color:var(--accent);}
 /* Colour picker */
 .colour-picker{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center;}
 .colour-picker label{font-size:6px;color:var(--dim);letter-spacing:1px;}
@@ -80,6 +84,9 @@ h1{font-size:22px;color:var(--accent);text-shadow:0 0 20px #f5c84288,3px 3px 0 #
       <div class="hud-item"><span class="hud-label">SCORE</span><span class="hud-value" id="scoreDisplay">0</span></div>
       <div class="hud-item"><span class="hud-label">TIME</span><span class="hud-value" id="timeDisplay">0s</span></div>
       <div class="hud-item"><span class="hud-label">BEST</span><span class="hud-value" id="bestDisplay">0</span></div>
+    </div>
+    <div style="display:flex;gap:12px;align-items:center;">
+      <div id="levelBtns" style="display:flex;gap:8px;"></div>
     </div>
     <canvas id="gameCanvas" width="520" height="420"></canvas>
     <div class="hint">ARROW KEYS TO MOVE &nbsp;|&nbsp; CLICK TO START</div>
@@ -194,38 +201,119 @@ function setRatColour(idx){
 }
 
 // ═══════════════ MAZE ═══════════════════════════════════
-// 26 cols × 21 rows = 520 × 420 px. '#'=wall, ' '=floor.
-// Every corridor is 1 tile wide (20px). Entities use r=8
-// for wall collision so they fit through all corridors cleanly.
 const TILE=20, COLS=26, ROWS=21;
-const W=COLS*TILE, H=ROWS*TILE;   // 520 × 420
-const CAT2_TIME=30;
+const W=COLS*TILE, H=ROWS*TILE;
 
-const MAZE=[
-  '##########################',  //  0
-  '#                        #',  //  1
-  '#  ######  ##  ######    #',  //  2
-  '#  ######  ##  ######    #',  //  3
-  '#                        #',  //  4
-  '#                        #',  //  5
-  '#  ##  ##########  ##    #',  //  6
-  '#  ##  ##########  ##    #',  //  7
-  '#                        #',  //  8
-  '#                        #',  //  9
-  '#  ######  ##  ######    #',  // 10  ← rat spawns here (col 13)
-  '#  ######  ##  ######    #',  // 11
-  '#                        #',  // 12
-  '#                        #',  // 13
-  '#  ##  ##########  ##    #',  // 14
-  '#  ##  ##########  ##    #',  // 15
-  '#                        #',  // 16
-  '#                        #',  // 17
-  '#  ######  ##  ######    #',  // 18
-  '#  ######  ##  ######    #',  // 19
-  '##########################',  // 20
+const LEVELS=[
+  { cat1Speed:1.4, cat2Speed:1.6, cat2Time:30, speedPerPt:0.0006,
+    maze:[
+      '##########################',
+      '#                        #',
+      '#  ######  ##  ######    #',
+      '#  ######  ##  ######    #',
+      '#                        #',
+      '#                        #',
+      '#  ##  ##########  ##    #',
+      '#  ##  ##########  ##    #',
+      '#                        #',
+      '#                        #',
+      '#  ######  ##  ######    #',
+      '#  ######  ##  ######    #',
+      '#                        #',
+      '#                        #',
+      '#  ##  ##########  ##    #',
+      '#  ##  ##########  ##    #',
+      '#                        #',
+      '#                        #',
+      '#  ######  ##  ######    #',
+      '#  ######  ##  ######    #',
+      '##########################',
+    ]
+  },
+  { cat1Speed:1.65, cat2Speed:1.95, cat2Time:25, speedPerPt:0.0008,
+    maze:[
+      '##########################',
+      '#          ##            #',
+      '#  ######  ##  ######    #',
+      '#  ######  ##  ######    #',
+      '#          ##            #',
+      '##   ####  ##  ####   ####',
+      '#    ####  ##  ####      #',
+      '#                        #',
+      '#  ####  ######  ####    #',
+      '#  ####  ######  ####    #',
+      '#                        #',
+      '#                        #',
+      '#  ####  ######  ####    #',
+      '#  ####  ######  ####    #',
+      '#                        #',
+      '#    ####  ##  ####      #',
+      '##   ####  ##  ####   ####',
+      '#          ##            #',
+      '#  ######  ##  ######    #',
+      '#          ##            #',
+      '##########################',
+    ]
+  },
+  { cat1Speed:1.9, cat2Speed:2.2, cat2Time:20, speedPerPt:0.0010,
+    maze:[
+      '##########################',
+      '#    ##      ##      ##  #',
+      '#    ##  ##  ##  ##  ##  #',
+      '#        ##      ##      #',
+      '#  ####  ##  ##  ##  ##  #',
+      '#  ####      ##      ##  #',
+      '#            ##          #',
+      '#  ######    ##  ######  #',
+      '#  ######            ##  #',
+      '#        ##  ##  ##      #',
+      '#  ####  ##  ##  ##  ##  #',
+      '#  ####  ##  ##  ##  ##  #',
+      '#        ##  ##  ##      #',
+      '#  ######            ##  #',
+      '#  ######    ##  ######  #',
+      '#            ##          #',
+      '#  ####      ##      ##  #',
+      '#  ####  ##  ##  ##  ##  #',
+      '#        ##      ##      #',
+      '#    ##      ##      ##  #',
+      '##########################',
+    ]
+  },
+  { cat1Speed:2.2, cat2Speed:2.5, cat2Time:15, speedPerPt:0.0013,
+    maze:[
+      '##########################',
+      '#  ##  ##  ##  ##  ##    #',
+      '#  ##  ##  ##  ##  ##    #',
+      '#                        #',
+      '#   ##  ##  ##  ##  ##   #',
+      '#   ##  ##  ##  ##  ##   #',
+      '#                        #',
+      '#  ##  ##  ##  ##  ##    #',
+      '#  ##  ##  ##  ##  ##    #',
+      '#                        #',
+      '#   ##  ##  ##  ##  ##   #',
+      '#   ##  ##  ##  ##  ##   #',
+      '#                        #',
+      '#  ##  ##  ##  ##  ##    #',
+      '#  ##  ##  ##  ##  ##    #',
+      '#                        #',
+      '#   ##  ##  ##  ##  ##   #',
+      '#   ##  ##  ##  ##  ##   #',
+      '#                        #',
+      '#  ##  ##  ##  ##  ##    #',
+      '##########################',
+    ]
+  },
 ];
 
-const MAP=MAZE.map(r=>[...r].map(c=>c==='#'?1:0));
+let currentLevel=0;
+let MAP=[];
+
+function loadLevel(lvlIdx){
+  currentLevel=lvlIdx;
+  MAP=LEVELS[lvlIdx].maze.map(r=>[...r].map(c=>c==='#'?1:0));
+}
 
 function isWall(c,r){return c<0||c>=COLS||r<0||r>=ROWS||MAP[r][c]===1;}
 
@@ -293,9 +381,12 @@ let cheeses=[],cheeseTimer=0;
 let cat2Warning=false,cat2WarnTimer=0;
 let pendingScore=0,localScores=[];
 
-function initGame(){
+function initGame(lvl){
+  if(lvl!==undefined) currentLevel=lvl;
+  loadLevel(currentLevel);
+  const L=LEVELS[currentLevel];
   rat={x:13*TILE+TILE/2,y:10*TILE+TILE/2,r:10,cr:8,speed:2.6,dx:0,dy:0,tail:[]};
-  cats=[{x:TILE+TILE/2,y:TILE+TILE/2,r:12,cr:8,speed:1.4,angle:0,pathTimer:0,waypoints:[],id:1}];
+  cats=[{x:TILE+TILE/2,y:TILE+TILE/2,r:12,cr:8,speed:L.cat1Speed,angle:0,pathTimer:0,waypoints:[],id:1}];
   score=0;elapsed=0;lastTime=null;
   particles=[];cheeses=[];cheeseTimer=1;
   cat2Warning=false;cat2WarnTimer=0;
@@ -303,6 +394,7 @@ function initGame(){
   stopHeartbeat();
   spawnCheese();
   incrementPlayCount();
+  updateLevelUI();
 }
 
 function maxCheese(){
@@ -489,7 +581,7 @@ function drawStartScreen(){
   ctx.fillText('Survive the cats!',W/2,H/2-14);
   ctx.fillText('Grab cheese for bonus points!',W/2,H/2+6);
   ctx.fillStyle='#6080d0';ctx.font='6px "Press Start 2P"';
-  ctx.fillText(`A 2nd cat joins after ${CAT2_TIME}s!`,W/2,H/2+26);
+  ctx.fillText(`A 2nd cat joins after ${LEVELS[currentLevel].cat2Time}s!`,W/2,H/2+26);
   if(Math.floor(Date.now()/500)%2){
     ctx.fillStyle='#4ade80';ctx.font='9px "Press Start 2P"';ctx.fillText('CLICK TO START',W/2,H/2+58);
   }
@@ -499,9 +591,12 @@ function drawStartScreen(){
 function drawDeadScreen(){
   ctx.fillStyle='rgba(0,0,0,.82)';ctx.fillRect(0,0,W,H);
   ctx.textAlign='center';
-  ctx.fillStyle='#e05252';ctx.font='18px "Press Start 2P"';ctx.fillText('CAUGHT!',W/2,H/2-40);
+  ctx.fillStyle='#e05252';ctx.font='18px "Press Start 2P"';ctx.fillText('CAUGHT!',W/2,H/2-55);
+  ctx.fillStyle='#f5c842';ctx.font='9px "Press Start 2P"';ctx.fillText('LEVEL '+(currentLevel+1),W/2,H/2-26);
+  ctx.fillStyle='#aaaacc';ctx.font='7px "Press Start 2P"';
+  ctx.fillText('CHANGE LEVEL BELOW',W/2,H/2-4);
   if(Math.floor(Date.now()/500)%2){
-    ctx.fillStyle='#4ade80';ctx.font='9px "Press Start 2P"';ctx.fillText('CLICK TO RETRY',W/2,H/2+20);
+    ctx.fillStyle='#4ade80';ctx.font='9px "Press Start 2P"';ctx.fillText('CLICK TO RETRY',W/2,H/2+24);
   }
 }
 
@@ -522,18 +617,19 @@ function loop(ts){
     updateRat(dt);
 
     if(cats.length===1){
-      if(elapsed>=CAT2_TIME-3&&elapsed<CAT2_TIME){cat2Warning=true;cat2WarnTimer=elapsed-(CAT2_TIME-3);}
-      if(elapsed>=CAT2_TIME){
+      const cat2t=LEVELS[currentLevel].cat2Time; if(elapsed>=cat2t-3&&elapsed<cat2t){cat2Warning=true;cat2WarnTimer=elapsed-(cat2t-3);}
+      if(elapsed>=cat2t){
         cat2Warning=false;
         const sc=rat.x<W/2?24:1,sr=rat.y<H/2?19:1;
         const sx=sc*TILE+TILE/2,sy=sr*TILE+TILE/2;
-        cats.push({x:sx,y:sy,r:12,cr:8,speed:1.6,angle:0,pathTimer:0,waypoints:[],id:2});
+        cats.push({x:sx,y:sy,r:12,cr:8,speed:LEVELS[currentLevel].cat2Speed,angle:0,pathTimer:0,waypoints:[],id:2});
         burst(sx,sy,'#4070c0',22);
       }
     }
 
     for(const cat of cats){
-      cat.speed=(cat.id===1?1.4:1.6)+Math.floor(score)*0.0008;
+      const L=LEVELS[currentLevel];
+      cat.speed=(cat.id===1?L.cat1Speed:L.cat2Speed)+Math.floor(score)*L.speedPerPt;
       updateCat(cat,dt);
     }
     tickParticles(dt);
@@ -705,8 +801,25 @@ canvas.addEventListener('touchstart',e=>{e.preventDefault();tryStart();},{passiv
   base.addEventListener('touchcancel',e=>{e.preventDefault();reset();},{passive:false});
 })();
 
+// ═══════════════ LEVEL UI ══════════════════════════════
+function updateLevelUI(){
+  document.querySelectorAll('.level-btn').forEach((b,i)=>b.classList.toggle('active',i===currentLevel));
+}
+
+function buildLevelButtons(){
+  const wrap=document.getElementById('levelBtns');
+  LEVELS.forEach((_,i)=>{
+    const b=document.createElement('button');
+    b.className='level-btn'+(i===0?' active':'');
+    b.textContent='LVL '+(i+1);
+    b.onclick=()=>{ currentLevel=i; updateLevelUI(); };
+    wrap.appendChild(b);
+  });
+}
+
 // ═══════════════ START ══════════════════════════════════
 loadLeaderboard();
+buildLevelButtons();
 requestAnimationFrame(loop);
 </script>
 </body>
